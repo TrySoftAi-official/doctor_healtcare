@@ -17,6 +17,8 @@ async function bootstrap() {
   app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   }));
 
   // Rate limiting - completely disabled for development
@@ -115,7 +117,6 @@ async function bootstrap() {
     .addTag('Patients', 'Patient profile and management endpoints')
     .addTag('Appointments', 'Appointment booking and management endpoints')
     .addTag('Prescriptions', 'Prescription management endpoints')
-    .addTag('Messages', 'Real-time messaging endpoints')
     .addTag('Notifications', 'Notification system endpoints')
     .addTag('Dashboard', 'Analytics and dashboard endpoints')
     .addTag('Settings', 'System settings and configuration endpoints')
@@ -148,7 +149,7 @@ async function bootstrap() {
     `,
   });
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3003;
   await app.listen(port);
   console.log(`🚀 Healthcare API is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);

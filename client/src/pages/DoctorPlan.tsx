@@ -2,7 +2,7 @@ import AdminSidebar from "@/components/Admin/AdminSidebar";
 import AdminHeader from "@/components/Admin/AdminHeader";
 import StatCards from "@/components/doctor-plan/StatCards";
 import UpcomingAppointmentsTable from "@/components/doctor-plan/UpcomingAppointmentsTable";
-import RecentMessagesCard from "@/components/doctor-plan/RecentMessagesCard";
+// import RecentMessagesCard from "@/components/doctor-plan/RecentMessagesCard";
 import QuickNotesCard from "@/components/doctor-plan/QuickNotesCard";
 import MiniCalendar from "@/components/doctor-plan/MiniCalendar";
 import PatientFeedbackList from "@/components/doctor-plan/PatientFeedbackList";
@@ -54,7 +54,7 @@ export default function DoctorPlan() {
           <div className="max-w-6xl mx-auto space-y-4 lg:space-y-6">
             <StatCards />
             <UpcomingAppointmentsTable />
-            <RecentMessagesCard />
+            {/* <RecentMessagesCard /> */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               <QuickNotesCard />
               <MiniCalendar />

@@ -155,15 +155,6 @@ export class NotificationsService {
     });
   }
 
-  async sendMessageNotification(messageId: string, userId: string, senderName: string) {
-    return this.create({
-      userId,
-      type: NotificationType.MESSAGE_RECEIVED,
-      title: 'New Message',
-      message: `You have a new message from ${senderName}`,
-      data: { messageId },
-    });
-  }
 
   async sendSystemAnnouncement(userId: string, title: string, message: string) {
     return this.create({

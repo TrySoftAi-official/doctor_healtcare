@@ -10,7 +10,6 @@ export default function PublicHeader() {
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
           <img src="/vite.svg" alt="HealthCare" className="h-8" />
-          <span className="font-bold text-xl text-blue-600">HealthCare</span>
         </div>
 
         <nav className="hidden md:flex gap-8 text-gray-700 font-medium">

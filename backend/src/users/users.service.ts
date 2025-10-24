@@ -1,0 +1,99 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from './schemas/user.schema';
+
+@Injectable()
+export class UsersService {
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
+  async findAll() {
+    return this.userModel.find().select('-password').exec();
+  }
+
+  async findOne(id: string) {
+    const user = await this.userModel.findById(id).select('-password').exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async update(id: string, updateData: any) {
+    const user = await this.userModel.findByIdAndUpdate(id, updateData, { new: true }).select('-password').exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async remove(id: string) {
+    const user = await this.userModel.findByIdAndDelete(id).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return { message: 'User deleted successfully' };
+  }
+
+  async getUsersByRole(role: string) {
+    return this.userModel.find({ role }).select('-password').exec();
+  }
+
+  async updateProfile(userId: string, profileData: any) {
+    return this.userModel.findByIdAndUpdate(userId, profileData, { new: true }).select('-password').exec();
+  }
+
+  async searchUsersForConversation(currentUserId: string, currentUserRole: string, query: any) {
+    try {
+      const { search, role } = query;
+      
+      // Build query based on user role
+      let searchQuery: any = {
+        _id: { $ne: currentUserId }, // Exclude current user
+        isActive: true, // Only active users
+      };
+
+      // Role-based filtering
+      if (currentUserRole === 'Doctor') {
+        searchQuery.role = 'Patient';
+      } else if (currentUserRole === 'Patient') {
+        searchQuery.role = 'Doctor';
+      } else if (currentUserRole === 'Administrator') {
+        // Admins can see all users
+        if (role) {
+          searchQuery.role = role;
+        }
+      } else {
+        // Default: no users for unknown roles
+        return [];
+      }
+
+      // Add search functionality
+      if (search) {
+        searchQuery.$or = [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      console.log('Search query:', searchQuery);
+
+      const users = await this.userModel
+        .find(searchQuery)
+        .select('-password')
+        .sort({ firstName: 1, lastName: 1 })
+        .limit(50) // Limit results
+        .exec();
+
+      console.log('Found users:', users.length);
+      return users;
+    } catch (error) {
+      console.error('Error searching users for conversation:', error);
+      console.error('Error stack:', error.stack);
+      // Return empty array instead of throwing error
+      console.log('Returning empty array due to error');
+      return [];
+    }
+  }
+}

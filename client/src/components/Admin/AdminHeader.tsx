@@ -10,7 +10,6 @@ interface AdminDashboardMetrics {
   totalDoctors: number;
   totalAppointments: number;
   upcomingAppointments: number;
-  newMessages: number;
 }
 
 interface DoctorDashboardMetrics {
@@ -18,12 +17,10 @@ interface DoctorDashboardMetrics {
   completedAppointments: number;
   pendingAppointments: number;
   cancelledAppointments: number;
-  unreadMessages: number;
 }
 
 interface PatientDashboardMetrics {
   totalAppointments: number;
-  unreadMessages: number;
   unreadNotifications: number;
 }
 

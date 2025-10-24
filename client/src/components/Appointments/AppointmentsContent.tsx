@@ -282,37 +282,9 @@ const AppointmentsContent = () => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <button className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </button>
+         
         </div>
-        <div className="flex items-center space-x-2">
-          <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            New Appointment
-          </button>
-          <div className="flex items-center border border-gray-300 rounded-lg">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`px-3 py-2 text-sm ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-            >
-              List
-            </button>
-            <button
-              onClick={() => setViewMode("calendar")}
-              className={`px-3 py-2 text-sm ${viewMode === "calendar" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-            >
-              Calendar
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`px-3 py-2 text-sm ${viewMode === "grid" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-            >
-              Grid
-            </button>
-          </div>
-        </div>
+   
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

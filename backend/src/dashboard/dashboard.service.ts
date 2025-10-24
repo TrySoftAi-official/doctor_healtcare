@@ -6,7 +6,6 @@ import { Doctor, DoctorDocument } from '../doctors/schemas/doctor.schema';
 import { Patient, PatientDocument } from '../patients/schemas/patient.schema';
 import { Appointment, AppointmentDocument } from '../appointments/schemas/appointment.schema';
 import { Prescription, PrescriptionDocument } from '../prescriptions/schemas/prescription.schema';
-import { Message, MessageDocument } from '../messages/schemas/message.schema';
 import { Notification, NotificationDocument } from '../notifications/schemas/notification.schema';
 import { AppointmentStatus } from '../common/enums/appointment-status.enum';
 import { UserRole } from '../common/enums/user-role.enum';
@@ -19,7 +18,6 @@ export class DashboardService {
     @InjectModel(Patient.name) private patientModel: Model<PatientDocument>,
     @InjectModel(Appointment.name) private appointmentModel: Model<AppointmentDocument>,
     @InjectModel(Prescription.name) private prescriptionModel: Model<PrescriptionDocument>,
-    @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
   ) {}
 
@@ -30,7 +28,6 @@ export class DashboardService {
       totalAppointments,
       upcomingAppointments,
       recentAppointments,
-      newMessages,
     ] = await Promise.all([
       this.userModel.countDocuments({ role: UserRole.PATIENT, isActive: true }),
       this.userModel.countDocuments({ role: UserRole.DOCTOR, isActive: true }),
@@ -58,7 +55,6 @@ export class DashboardService {
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
-      this.messageModel.countDocuments({ isRead: false }),
     ]);
 
     // Get appointment statistics
@@ -139,7 +135,6 @@ export class DashboardService {
         totalDoctors,
         totalAppointments,
         upcomingAppointments,
-        newMessages,
       },
       appointmentStats,
       monthlyTrends,
@@ -156,7 +151,6 @@ export class DashboardService {
       cancelledAppointments,
       upcomingAppointments,
       recentAppointments,
-      unreadMessages,
     ] = await Promise.all([
       this.appointmentModel.countDocuments({ doctorId }),
       this.appointmentModel.countDocuments({ doctorId, status: AppointmentStatus.COMPLETED }),
@@ -190,7 +184,6 @@ export class DashboardService {
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
-      this.messageModel.countDocuments({ recipientId: doctorId, isRead: false }),
     ]);
 
     // Get patient feedback (if you have a feedback system)
@@ -262,7 +255,6 @@ export class DashboardService {
         completedAppointments,
         pendingAppointments,
         cancelledAppointments,
-        unreadMessages,
       },
       dailyTrends,
       upcomingAppointments: transformedUpcomingAppointments,
@@ -277,7 +269,6 @@ export class DashboardService {
       upcomingAppointments,
       recentAppointments,
       recentPrescriptions,
-      unreadMessages,
       unreadNotifications,
     ] = await Promise.all([
       this.appointmentModel.countDocuments({ patientId }),
@@ -321,7 +312,6 @@ export class DashboardService {
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
-      this.messageModel.countDocuments({ recipientId: patientId, isRead: false }),
       this.notificationModel.countDocuments({ userId: patientId, isRead: false }),
     ]);
 
@@ -357,7 +347,6 @@ export class DashboardService {
     return {
       metrics: {
         totalAppointments,
-        unreadMessages,
         unreadNotifications,
       },
       upcomingAppointments: transformedUpcomingAppointments,
@@ -392,19 +381,16 @@ export class DashboardService {
       totalUsers,
       totalAppointments,
       totalPrescriptions,
-      totalMessages,
     ] = await Promise.all([
       this.userModel.countDocuments({ isActive: true }),
       this.appointmentModel.countDocuments(),
       this.prescriptionModel.countDocuments(),
-      this.messageModel.countDocuments(),
     ]);
 
     return {
       totalUsers,
       totalAppointments,
       totalPrescriptions,
-      totalMessages,
     };
   }
 }

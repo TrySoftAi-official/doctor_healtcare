@@ -12,7 +12,6 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { DoctorsModule } from './doctors/doctors.module';
 import { PatientsModule } from './patients/patients.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
-import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
@@ -49,7 +48,6 @@ import { JwtConfig } from './config/jwt.config';
     DoctorsModule,
     PatientsModule,
     PrescriptionsModule,
-    MessagesModule,
     NotificationsModule,
     DashboardModule,
     SettingsModule,

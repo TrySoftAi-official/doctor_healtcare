@@ -61,7 +61,6 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
       { name: "Dashboard", icon: <Home className="w-5 h-5" />, path: "/Administrator", description: "Overview & Analytics" },
       { name: "Patients", icon: <Users className="w-5 h-5" />, path: "/Administrator/patients", description: "Manage Patients" },
       { name: "Appointments", icon: <Calendar className="w-5 h-5" />, path: "/Administrator/appointment", description: "Schedule & Manage" },
-      { name: "Messages", icon: <Mail className="w-5 h-5" />, path: "/Administrator/messages", description: "Communications" },
       { name: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/Administrator/reports", description: "Analytics & Insights" },
       { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Administrator/settings", description: "System Configuration" },
     ],

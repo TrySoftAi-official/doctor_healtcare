@@ -7,7 +7,6 @@ import { Doctor, DoctorSchema } from '../doctors/schemas/doctor.schema';
 import { Patient, PatientSchema } from '../patients/schemas/patient.schema';
 import { Appointment, AppointmentSchema } from '../appointments/schemas/appointment.schema';
 import { Prescription, PrescriptionSchema } from '../prescriptions/schemas/prescription.schema';
-import { Message, MessageSchema } from '../messages/schemas/message.schema';
 import { Notification, NotificationSchema } from '../notifications/schemas/notification.schema';
 
 @Module({
@@ -18,7 +17,6 @@ import { Notification, NotificationSchema } from '../notifications/schemas/notif
       { name: Patient.name, schema: PatientSchema },
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Prescription.name, schema: PrescriptionSchema },
-      { name: Message.name, schema: MessageSchema },
       { name: Notification.name, schema: NotificationSchema },
     ]),
   ],
