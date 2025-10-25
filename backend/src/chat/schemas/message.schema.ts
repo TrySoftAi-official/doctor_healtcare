@@ -40,3 +40,10 @@ export class Message {
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
+
+// Add indexes for better performance
+MessageSchema.index({ senderId: 1 });
+MessageSchema.index({ receiverId: 1 });
+MessageSchema.index({ createdAt: -1 });
+MessageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
+MessageSchema.index({ receiverId: 1, read: 1 });

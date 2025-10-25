@@ -8,6 +8,7 @@ import { Patient, PatientDocument } from '../patients/schemas/patient.schema';
 import { CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto } from './dto/appointment.dto';
 import { AppointmentStatus } from '../common/enums/appointment-status.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class AppointmentsService {
@@ -17,9 +18,25 @@ export class AppointmentsService {
     @InjectModel(Doctor.name) private doctorModel: Model<DoctorDocument>,
     @InjectModel(Patient.name) private patientModel: Model<PatientDocument>,
     private notificationsService: NotificationsService,
+    private notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(createAppointmentDto: CreateAppointmentDto, userId: string) {
+    // Validate appointment date is not in the past
+    const appointmentDate = new Date(createAppointmentDto.appointmentDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (appointmentDate < today) {
+      throw new BadRequestException('Cannot book appointments in the past');
+    }
+
+    // Validate time format and business hours (9 AM to 6 PM)
+    const [hours, minutes] = createAppointmentDto.startTime.split(':').map(Number);
+    if (hours < 9 || hours >= 18) {
+      throw new BadRequestException('Appointments can only be booked between 9 AM and 6 PM');
+    }
+
     // Check if doctor exists and is available
     const doctor = await this.doctorModel.findById(createAppointmentDto.doctorId).exec();
     if (!doctor || !doctor.isAvailable) {
@@ -53,10 +70,19 @@ export class AppointmentsService {
       throw new BadRequestException('Time slot is already booked');
     }
 
+    // Calculate end time if not provided (default 1 hour duration)
+    let endTime = createAppointmentDto.endTime;
+    if (!endTime) {
+      const [hours, minutes] = createAppointmentDto.startTime.split(':').map(Number);
+      const endHours = hours + 1;
+      endTime = `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
     const appointment = new this.appointmentModel({
       ...createAppointmentDto,
       patientId: patient._id, // Use the patient profile ID, not the user ID
       appointmentDate: new Date(createAppointmentDto.appointmentDate),
+      endTime: endTime,
     });
 
     const savedAppointment = await appointment.save();
@@ -70,13 +96,16 @@ export class AppointmentsService {
     }
 
     // Send notification to doctor
-    await this.notificationsService.create({
+    const notification = await this.notificationsService.create({
       userId: doctor.userId,
       type: 'appointment_reminder' as any,
       title: 'New Appointment Request',
       message: `You have a new appointment request from a patient`,
       data: { appointmentId: savedAppointment._id },
     });
+
+    // Send real-time notification to doctor if they're online
+    await this.notificationsGateway.sendNotificationToUser(doctor.userId, notification);
 
     return savedAppointment;
   }

@@ -6,6 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { doctorService } from "@/services/doctorService";
 import { appointmentService } from "@/services/appointmentService";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/components/Toast";
 
 interface Doctor {
   id: string;
@@ -18,6 +19,7 @@ interface Doctor {
 
 export default function AppointmentForm() {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -86,7 +88,11 @@ export default function AppointmentForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) {
-      alert('Please log in to book an appointment');
+      addToast({
+        type: 'error',
+        title: 'Authentication Required',
+        message: 'Please log in to book an appointment',
+      });
       return;
     }
 
@@ -94,15 +100,19 @@ export default function AppointmentForm() {
       setSubmitting(true);
       await appointmentService.createAppointment({
         doctorId: form.doctorId,
-        patientId: user.id,
         appointmentDate: form.date,
-        appointmentTime: form.time,
-        type: form.type as 'consultation' | 'follow-up' | 'emergency',
-        reason: form.problemDescription,
-        notes: form.notes,
+        startTime: form.time,
+        endTime: form.time, // Will be calculated by backend
+        type: form.type as 'in-person' | 'online',
+        problemDescription: form.problemDescription,
       });
       
-      alert('Appointment booked successfully!');
+      addToast({
+        type: 'success',
+        title: 'Appointment Booked!',
+        message: 'Your appointment has been successfully booked.',
+      });
+      
       // Reset form
       setForm({
         doctorId: "",
@@ -115,8 +125,12 @@ export default function AppointmentForm() {
         problemDescription: "",
         notes: "",
       });
-    } catch (error) {
-      alert('Failed to book appointment. Please try again.');
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Booking Failed',
+        message: error.response?.data?.message || 'Failed to book appointment. Please try again.',
+      });
     } finally {
       setSubmitting(false);
     }

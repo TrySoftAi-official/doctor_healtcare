@@ -1,9 +1,11 @@
 import { useAppointmentBooking } from "@/contexts/AppointmentBookingContext";
 import { appointmentService } from "@/services/appointmentService";
+import { useToast } from "@/components/Toast";
 import { useState } from "react";
 
 const ReviewConfirm = () => {
   const { state, dispatch } = useAppointmentBooking();
+  const { addToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleBookAppointment = async () => {
@@ -52,8 +54,12 @@ const ReviewConfirm = () => {
       // Reset form on success
       dispatch({ type: 'RESET_FORM' });
       
-      // Show success message (you can implement a toast notification here)
-      alert('Appointment booked successfully!');
+      // Show success message
+      addToast({
+        type: 'success',
+        title: 'Appointment Booked!',
+        message: 'Your appointment has been successfully booked.',
+      });
       
     } catch (error: any) {
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to book appointment' });

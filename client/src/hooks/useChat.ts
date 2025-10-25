@@ -60,9 +60,11 @@ export const useChat = (): UseChatReturn => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Map<string, boolean>>(new Map());
+  const [pendingMessages, setPendingMessages] = useState<Map<string, SendMessageRequest[]>>(new Map());
   
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const currentParticipantRef = useRef<string | null>(null);
+  const retryTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // Initialize socket connection
   useEffect(() => {
@@ -230,17 +232,31 @@ export const useChat = (): UseChatReturn => {
 
   // Send message
   const sendMessage = useCallback(async (data: SendMessageRequest) => {
-    if (!socket) return;
+    if (!socket || !isConnected) {
+      // Queue message for later if offline
+      setPendingMessages(prev => {
+        const newMap = new Map(prev);
+        const participantMessages = newMap.get(data.receiverId) || [];
+        newMap.set(data.receiverId, [...participantMessages, data]);
+        return newMap;
+      });
+      return;
+    }
 
     try {
-      // Send via socket for real-time delivery
+      // Send via socket for real-time delivery and persistence
       socket.emit('send_message', data);
-      
-      // Also send via REST API for persistence
-      await chatService.sendMessage(data);
     } catch (error) {
+      console.error('Error sending message:', error);
+      // Queue message for retry
+      setPendingMessages(prev => {
+        const newMap = new Map(prev);
+        const participantMessages = newMap.get(data.receiverId) || [];
+        newMap.set(data.receiverId, [...participantMessages, data]);
+        return newMap;
+      });
     }
-  }, [socket]);
+  }, [socket, isConnected]);
 
   // Join chat room
   const joinChat = useCallback((participantId: string) => {
@@ -304,13 +320,32 @@ export const useChat = (): UseChatReturn => {
     return onlineUsers.has(userId);
   }, [onlineUsers]);
 
+  // Process pending messages when connection is restored
+  const processPendingMessages = useCallback(async () => {
+    if (!socket || !isConnected) return;
+
+    for (const [participantId, messages] of pendingMessages) {
+      for (const message of messages) {
+        try {
+          socket.emit('send_message', message);
+        } catch (error) {
+          console.error('Error sending pending message:', error);
+        }
+      }
+    }
+    
+    // Clear pending messages after processing
+    setPendingMessages(new Map());
+  }, [socket, isConnected, pendingMessages]);
+
   // Load initial data
   useEffect(() => {
     if (isConnected && user) {
       loadParticipants();
       loadUnreadCount();
+      processPendingMessages();
     }
-  }, [isConnected, user, loadParticipants, loadUnreadCount]);
+  }, [isConnected, user, loadParticipants, loadUnreadCount, processPendingMessages]);
 
   // Cleanup typing timeouts
   useEffect(() => {

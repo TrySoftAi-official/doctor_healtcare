@@ -35,3 +35,12 @@ export class Notification {
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
+
+// Add indexes for better performance
+NotificationSchema.index({ userId: 1 });
+NotificationSchema.index({ type: 1 });
+NotificationSchema.index({ isRead: 1 });
+NotificationSchema.index({ isDeleted: 1 });
+NotificationSchema.index({ createdAt: -1 });
+NotificationSchema.index({ userId: 1, isRead: 1, isDeleted: 1 });
+NotificationSchema.index({ userId: 1, createdAt: -1 });

@@ -57,3 +57,13 @@ export class Appointment {
 }
 
 export const AppointmentSchema = SchemaFactory.createForClass(Appointment);
+
+// Add indexes for better performance
+AppointmentSchema.index({ doctorId: 1 });
+AppointmentSchema.index({ patientId: 1 });
+AppointmentSchema.index({ appointmentDate: 1 });
+AppointmentSchema.index({ status: 1 });
+AppointmentSchema.index({ type: 1 });
+AppointmentSchema.index({ doctorId: 1, appointmentDate: 1, startTime: 1 });
+AppointmentSchema.index({ patientId: 1, appointmentDate: 1 });
+AppointmentSchema.index({ doctorId: 1, status: 1, appointmentDate: 1 });

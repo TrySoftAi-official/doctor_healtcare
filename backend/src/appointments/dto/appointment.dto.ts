@@ -26,12 +26,13 @@ export class CreateAppointmentDto {
   @IsString()
   startTime: string;
 
-  @ApiProperty({
-    description: 'Appointment end time in HH:MM format',
+  @ApiPropertyOptional({
+    description: 'Appointment end time in HH:MM format (will be calculated if not provided)',
     example: '10:00'
   })
+  @IsOptional()
   @IsString()
-  endTime: string;
+  endTime?: string;
 
   @ApiProperty({
     description: 'Type of appointment',

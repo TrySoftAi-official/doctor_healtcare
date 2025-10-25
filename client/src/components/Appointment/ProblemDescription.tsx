@@ -1,10 +1,20 @@
 import { Upload, X, FileText } from "lucide-react";
 import { useAppointmentBooking } from "@/contexts/AppointmentBookingContext";
+import { useToast } from "@/components/Toast";
 import { useRef } from "react";
 
 const ProblemDescription = () => {
   const { state, dispatch } = useAppointmentBooking();
+  const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
   return (
     <section className="py-16" style={{ backgroundColor: '#F0F7FF' }}>
       <div className="max-w-6xl mx-auto px-6">
@@ -68,6 +78,28 @@ const ProblemDescription = () => {
                 onChange={(e) => {
                   if (e.target.files) {
                     Array.from(e.target.files).forEach(file => {
+                      // Check file size (10MB = 10 * 1024 * 1024 bytes)
+                      const maxSize = 10 * 1024 * 1024;
+                      if (file.size > maxSize) {
+                        addToast({
+                          type: 'error',
+                          title: 'File Too Large',
+                          message: `${file.name} is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maximum size is 10MB.`,
+                        });
+                        return;
+                      }
+                      
+                      // Check file type
+                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+                      if (!allowedTypes.includes(file.type)) {
+                        addToast({
+                          type: 'error',
+                          title: 'Invalid File Type',
+                          message: `${file.name} is not a supported format. Please upload JPG, PNG, or PDF files.`,
+                        });
+                        return;
+                      }
+                      
                       dispatch({ type: 'ADD_UPLOADED_FILE', payload: file });
                     });
                   }
@@ -97,7 +129,7 @@ const ProblemDescription = () => {
                         {file.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {(file.size / (1024 * 1024)).toFixed(1)} MB
+                        {formatFileSize(file.size)}
                       </p>
                     </div>
                   </div>

@@ -220,9 +220,15 @@ const DoctorSelection = () => {
               {/* Profile Picture */}
               <div className="mb-4">
                 <img
-                    src={doctor.avatar || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face"}
+                    src={doctor.avatar ? 
+                      (doctor.avatar.startsWith('http') ? doctor.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${doctor.avatar}`) 
+                      : "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face"
+                    }
                   alt={doctor.name}
                   className="w-24 h-24 rounded-full object-cover mx-auto"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face";
+                  }}
                 />
               </div>
 
