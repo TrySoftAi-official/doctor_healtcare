@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Put, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto } from './dto/appointment.dto';
@@ -136,6 +136,44 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Update appointment' })
   update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto): Promise<any> {
     return this.appointmentsService.update(id, updateAppointmentDto);
+  }
+
+  @Put(':id/status')
+  @ApiOperation({ 
+    summary: 'Update appointment status',
+    description: 'Update the status of an appointment. Valid statuses: Pending, Confirmed, Completed, Cancelled, No Show'
+  })
+  @ApiParam({ name: 'id', description: 'Appointment ID' })
+  @ApiBody({
+    description: 'Status update request',
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'No Show'],
+          example: 'Confirmed'
+        }
+      },
+      required: ['status']
+    }
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Appointment status updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string' },
+        updatedAt: { type: 'string' }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid status value' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  updateStatus(@Param('id') id: string, @Body() body: { status: string }): Promise<any> {
+    return this.appointmentsService.updateStatus(id, body.status);
   }
 
   @Patch(':id/cancel')

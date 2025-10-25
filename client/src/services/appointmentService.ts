@@ -67,6 +67,11 @@ export const appointmentService = {
     return response.data;
   },
 
+  async updateAppointmentStatus(id: string, status: string) {
+    const response = await api.put(`/appointments/${id}/status`, { status });
+    return response.data;
+  },
+
   async cancelAppointment(id: string, data: CancelAppointmentRequest) {
     const response = await api.patch(`/appointments/${id}/cancel`, data);
     return response.data;

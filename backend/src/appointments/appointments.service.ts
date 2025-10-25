@@ -105,7 +105,7 @@ export class AppointmentsService {
     });
 
     // Send real-time notification to doctor if they're online
-    await this.notificationsGateway.sendNotificationToUser(doctor.userId, notification);
+    await this.notificationsGateway.sendNotificationToUser(doctor.userId.toString(), notification);
 
     return savedAppointment;
   }
@@ -377,6 +377,59 @@ export class AppointmentsService {
     }
 
     return this.findAll(query);
+  }
+
+  async updateStatus(id: string, status: string): Promise<any> {
+    // Validate status
+    const validStatuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'No Show'];
+    if (!validStatuses.includes(status)) {
+      throw new BadRequestException(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const appointment = await this.appointmentModel.findById(id).exec();
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    // Update the status
+    const updatedAppointment = await this.appointmentModel
+      .findByIdAndUpdate(
+        id, 
+        { status }, 
+        { new: true }
+      )
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email phone'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email phone'
+        }
+      })
+      .exec();
+
+    // Ensure user data is properly attached
+    if (updatedAppointment.patientId && (updatedAppointment.patientId as any).userId) {
+      (updatedAppointment as any).patientUser = (updatedAppointment.patientId as any).userId;
+    }
+    if (updatedAppointment.doctorId && (updatedAppointment.doctorId as any).userId) {
+      (updatedAppointment as any).doctorUser = (updatedAppointment.doctorId as any).userId;
+    }
+
+    // Transform appointment to include appointmentType field for frontend compatibility
+    const appointmentObj = updatedAppointment.toObject ? updatedAppointment.toObject() : updatedAppointment;
+    const transformedAppointment = {
+      ...appointmentObj,
+      appointmentType: updatedAppointment.type,
+    };
+
+    return transformedAppointment as any;
   }
 
 }

@@ -1,10 +1,20 @@
 // import { BadgeCheck } from "lucide-react"; // Removed unused import
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { appointmentService } from "@/services/appointmentService";
 import { useAuth } from "@/providers/AuthProvider";
 import { formatAppointmentTime, formatPatientName } from "@/utils/appointmentUtils";
+import AppointmentDetailsModal from "@/components/Appointment/AppointmentDetailsModal";
 
-const Row = ({ avatar, name, problem, time, status }: { avatar: string; name: string; problem: string; time: string; status: "Pending" | "Confirmed" | "Completed" | "Cancelled" }) => {
+const Row = ({ avatar, name, problem, time, status, appointment, onViewDetails }: { 
+  avatar: string; 
+  name: string; 
+  problem: string; 
+  time: string; 
+  status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
+  appointment: any;
+  onViewDetails: (appointment: any) => void;
+}) => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
@@ -37,7 +47,12 @@ const Row = ({ avatar, name, problem, time, status }: { avatar: string; name: st
         </span>
       </div>
       <div className="col-span-3 text-right">
-        <button className="text-white bg-blue-600 hover:bg-blue-700 text-xs px-3 py-2 rounded-md">View Details</button>
+        <button 
+          onClick={() => onViewDetails(appointment)}
+          className="text-white bg-blue-600 hover:bg-blue-700 text-xs px-3 py-2 rounded-md transition-colors"
+        >
+          View Details
+        </button>
       </div>
     </div>
   );
@@ -45,7 +60,27 @@ const Row = ({ avatar, name, problem, time, status }: { avatar: string; name: st
 
 export default function UpcomingAppointmentsTable() {
   const { user } = useAuth();
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Handler for viewing appointment details
+  const handleViewDetails = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
+
+  // Handler for closing modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  // Handler for status changes
+  const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    console.log(`Appointment ${appointmentId} status changed to ${newStatus}`);
+    // Refetch appointments to update the list
+    // The query will automatically refetch due to the refetchInterval
+  };
   
   // Fetch appointments for the doctor
   const { data: appointmentsData, isLoading, error } = useQuery({
@@ -90,7 +125,8 @@ export default function UpcomingAppointmentsTable() {
       problem: apt.appointmentType || apt.type || 'General Checkup',
       time: formatAppointmentTime(apt.startTime),
       status: apt.status || 'Pending',
-      avatar: `https://ui-avatars.com/api/?name=${apt.patientId?.userId?.firstName || 'U'}+${apt.patientId?.userId?.lastName || 'P'}&background=random`
+      avatar: `https://ui-avatars.com/api/?name=${apt.patientId?.userId?.firstName || 'U'}+${apt.patientId?.userId?.lastName || 'P'}&background=random`,
+      appointment: apt // Include the full appointment object
     }));
   };
 
@@ -174,6 +210,8 @@ export default function UpcomingAppointmentsTable() {
                 problem={appointment.problem}
                 time={appointment.time}
                 status={appointment.status as "Pending" | "Confirmed" | "Completed" | "Cancelled"}
+                appointment={appointment.appointment}
+                onViewDetails={handleViewDetails}
               />
             ))
           ) : (
@@ -183,6 +221,14 @@ export default function UpcomingAppointmentsTable() {
           )}
         </div>
       </div>
+      
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 }
