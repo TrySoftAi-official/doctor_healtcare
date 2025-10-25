@@ -9,6 +9,8 @@ import PatientPanel from '@/pages/PatientPanel';
 import DoctorPlan from '@/pages/DoctorPlan';
 import AdministratorPatients from '@/pages/AdministratorPatients';
 import TestMobile from '@/pages/TestMobile';
+import { DoctorChat } from '@/pages/DoctorChat';
+import { PatientChat } from '@/pages/PatientChat';
 import Login from '@/pages/auth/Login';
 import Signup from '@/pages/auth/Signup';
 import Forgot from '@/pages/auth/Forgot';
@@ -107,6 +109,22 @@ export default function AppRoutes() {
           } 
         />
         <Route 
+          path="/Doctor/chat" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <DoctorChat />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Doctor/chat/:patientId" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <DoctorChat />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/Patient" 
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
@@ -135,6 +153,22 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
               <Appointments />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient/chat" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <PatientChat />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient/chat/:doctorId" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <PatientChat />
             </ProtectedRoute>
           } 
         />

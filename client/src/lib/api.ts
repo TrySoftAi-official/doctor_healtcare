@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+import { config } from '../config/env';
+import { TokenManager } from '../utils/tokenManager';
+
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3003';
+const API_BASE_URL = config.apiUrl;
 
 // Create axios instance
 const api = axios.create({
@@ -15,8 +18,8 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    const token = TokenManager.getToken();
+    if (token && TokenManager.isAuthenticated()) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -32,7 +35,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('access_token');
+      TokenManager.clearTokens();
       localStorage.removeItem('app_auth_user');
       window.location.href = '/auth/login';
     }

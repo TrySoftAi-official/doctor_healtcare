@@ -47,10 +47,24 @@ export class SettingsService {
   }
 
   async updateProfileSettings(userId: string, role: string, updateData: any) {
-    const user = await this.userModel.findByIdAndUpdate(userId, updateData.user, { new: true }).select('-password').exec();
+    console.log('Updating profile for user:', userId, 'role:', role, 'data:', updateData);
+    
+    // Update user fields
+    const userUpdateData = updateData.user || {};
+    
+    // Handle date conversion if needed
+    if (userUpdateData.dateOfBirth && typeof userUpdateData.dateOfBirth === 'string') {
+      userUpdateData.dateOfBirth = new Date(userUpdateData.dateOfBirth);
+    }
+    
+    console.log('User update data:', userUpdateData);
+    
+    const user = await this.userModel.findByIdAndUpdate(userId, userUpdateData, { new: true }).select('-password').exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    
+    console.log('Updated user:', user);
 
     let profile = null;
     if (role === UserRole.DOCTOR && updateData.profile) {

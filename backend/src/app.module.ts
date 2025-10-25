@@ -16,6 +16,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SettingsModule } from './settings/settings.module';
 import { UploadModule } from './upload/upload.module';
+import { ChatModule } from './chat/chat.module';
 
 // Configuration
 import { DatabaseConfig } from './config/database.config';
@@ -52,6 +53,7 @@ import { JwtConfig } from './config/jwt.config';
     DashboardModule,
     SettingsModule,
     UploadModule,
+    ChatModule,
   ],
   providers: [],
 })

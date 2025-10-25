@@ -10,15 +10,25 @@ export class UploadService {
       throw new Error('No file uploaded');
     }
 
+    console.log('Uploading file:', {
+      filename: file.filename,
+      originalName: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+
     const fileUrl = `${this.configService.get('APP_URL') || 'http://localhost:3000'}/uploads/${file.filename}`;
     
-    return {
+    const result = {
       filename: file.filename,
       originalName: file.originalname,
       mimetype: file.mimetype,
       size: file.size,
       url: fileUrl,
     };
+
+    console.log('File upload result:', result);
+    return result;
   }
 
   async uploadMultipleFiles(files: Express.Multer.File[]) {

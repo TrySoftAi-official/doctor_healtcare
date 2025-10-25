@@ -1,13 +1,86 @@
-import { Shield, ChevronDown, Plus, X } from "lucide-react";
+import { Shield, Plus, X, Save, Loader2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useState, useEffect } from "react";
+import { settingsService, type SystemSettings } from "@/services/settingsService";
+import { toast } from "sonner";
 
 const AdministratorSettings = () => {
   const { user } = useAuth();
   const userRole = user?.role || "Patient";
+  
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<SystemSettings>({
+    siteName: "",
+    siteDescription: "",
+    contactEmail: "",
+    contactPhone: "",
+    address: "",
+    maintenanceMode: false,
+    registrationEnabled: true,
+    emailVerificationRequired: true,
+    maxFileSize: 10,
+    allowedFileTypes: ["jpg", "jpeg", "png", "pdf", "doc", "docx"]
+  });
 
   // Only show administrator settings for administrators
   if (userRole !== "Administrator") {
     return null;
+  }
+
+  useEffect(() => {
+    loadSystemData();
+  }, []);
+
+  const loadSystemData = async () => {
+    try {
+      setLoading(true);
+      const response = await settingsService.getSystemSettings();
+      setFormData(prev => ({
+        ...prev,
+        ...response
+      }));
+    } catch (error) {
+      console.error("Error loading system data:", error);
+      toast.error("Failed to load system settings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await settingsService.updateSystemSettings(formData);
+      toast.success("System settings updated successfully");
+    } catch (error) {
+      console.error("Error updating system settings:", error);
+      toast.error("Failed to update system settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="ml-2">Loading system settings...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -23,93 +96,229 @@ const AdministratorSettings = () => {
         </div>
       </div>
 
+      <form onSubmit={handleSubmit}>
       <div className="space-y-4">
-        {/* Organization Name */}
+          {/* Site Information */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Organization Name
+              Site Name
           </label>
           <input
             type="text"
-            defaultValue="Carpe Diem Healthcare System"
+              name="siteName"
+              value={formData.siteName}
+              onChange={handleInputChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter site name"
           />
         </div>
 
-        {/* System Access Level */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            System Access Level
+              Site Description
           </label>
-          <div className="relative">
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
-              <option>Full Access</option>
-              <option>Limited Access</option>
-              <option>Read Only</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <textarea
+              name="siteDescription"
+              value={formData.siteDescription}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter site description"
+            />
+          </div>
+
+          {/* Contact Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                name="contactEmail"
+                value={formData.contactEmail}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="contact@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Phone
+              </label>
+              <input
+                type="tel"
+                name="contactPhone"
+                value={formData.contactPhone}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="+1 (555) 123-4567"
+              />
           </div>
         </div>
 
-        {/* Department */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Department
-          </label>
-          <div className="relative">
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
-              <option>IT Administration</option>
-              <option>Medical Administration</option>
-              <option>Finance</option>
-              <option>Operations</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              Address
+            </label>
+            <textarea
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter organization address"
+            />
           </div>
+
+          {/* System Settings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-800">System Settings</h3>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-800">Maintenance Mode</h4>
+                <p className="text-sm text-gray-600">Put the system in maintenance mode</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="maintenanceMode"
+                  checked={formData.maintenanceMode}
+                  onChange={handleInputChange}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-800">Registration Enabled</h4>
+                <p className="text-sm text-gray-600">Allow new user registrations</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="registrationEnabled"
+                  checked={formData.registrationEnabled}
+                  onChange={handleInputChange}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-800">Email Verification Required</h4>
+                <p className="text-sm text-gray-600">Require email verification for new users</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="emailVerificationRequired"
+                  checked={formData.emailVerificationRequired}
+                  onChange={handleInputChange}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+            </div>
+          </div>
+
+          {/* File Upload Settings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-800">File Upload Settings</h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Maximum File Size (MB)
+              </label>
+              <input
+                type="number"
+                name="maxFileSize"
+                value={formData.maxFileSize}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                min="1"
+                max="100"
+              />
         </div>
 
-        {/* Permissions */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            System Permissions
+                Allowed File Types
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-              User Management
-              <button className="ml-2 text-green-600 hover:text-green-800">
+                {formData.allowedFileTypes?.map((type, index) => (
+                  <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                    {type}
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newTypes = formData.allowedFileTypes?.filter((_, i) => i !== index) || [];
+                        setFormData(prev => ({ ...prev, allowedFileTypes: newTypes }));
+                      }}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
                 <X className="w-3 h-3" />
               </button>
             </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-              System Settings
-              <button className="ml-2 text-green-600 hover:text-green-800">
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-              Reports Access
-              <button className="ml-2 text-green-600 hover:text-green-800">
-                <X className="w-3 h-3" />
-              </button>
-            </span>
+                ))}
           </div>
-          <button className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-800">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Add file type (e.g., jpg)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const input = e.target as HTMLInputElement;
+                      if (input.value && !formData.allowedFileTypes?.includes(input.value)) {
+                        setFormData(prev => ({
+                          ...prev,
+                          allowedFileTypes: [...(prev.allowedFileTypes || []), input.value]
+                        }));
+                        input.value = '';
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3 py-2 text-sm text-blue-600 hover:text-blue-800"
+                >
             <Plus className="w-4 h-4 mr-1" />
-            Add Permission
+                  Add
           </button>
+              </div>
+            </div>
         </div>
 
-        {/* System Notifications */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-medium text-gray-800">System Notifications</h3>
-            <p className="text-sm text-gray-600">Receive system alerts and updates</p>
+          {/* Save Button */}
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </>
+              )}
+            </button>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" defaultChecked className="sr-only peer" />
-            <div className="w-11 h-6 bg-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

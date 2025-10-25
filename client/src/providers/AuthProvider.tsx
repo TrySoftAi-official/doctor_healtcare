@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { authService } from "@/services/authService";
+import { TokenManager } from "@/utils/tokenManager";
 import type { User, LoginRequest, RegisterRequest } from "@/types";
 
 type AuthContextType = {
@@ -19,14 +20,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('access_token');
-      if (token) {
+      const token = TokenManager.getToken();
+      if (token && TokenManager.isAuthenticated()) {
         try {
           const profile = await authService.getProfile();
           setUser(profile.user);
         } catch (error) {
           // Token is invalid, clear storage
-          localStorage.removeItem('access_token');
+          TokenManager.clearTokens();
           localStorage.removeItem('app_auth_user');
         }
       }
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (credentials: LoginRequest) => {
     try {
       const response = await authService.login(credentials);
-      localStorage.setItem('access_token', response.access_token);
+      TokenManager.setToken(response.access_token);
       setUser(response.user);
     } catch (error) {
       console.error('Login error:', error);
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (userData: RegisterRequest) => {
     try {
       const response = await authService.register(userData);
-      localStorage.setItem('access_token', response.access_token);
+      TokenManager.setToken(response.access_token);
       setUser(response.user);
     } catch (error) {
       throw error;
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    localStorage.removeItem('access_token');
+    TokenManager.clearTokens();
     localStorage.removeItem('app_auth_user');
     setUser(null);
   };

@@ -11,6 +11,21 @@ export interface ProfileSettings {
   bio?: string;
 }
 
+export interface ProfileUpdateData {
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    dateOfBirth?: Date;
+    gender?: string;
+    profileImage?: string;
+  };
+  profile: {
+    bio?: string;
+  };
+}
+
 export interface NotificationPreferences {
   emailNotifications: boolean;
   smsNotifications: boolean;
@@ -81,7 +96,7 @@ export const settingsService = {
     return response.data;
   },
 
-  async updateProfileSettings(data: ProfileSettings) {
+  async updateProfileSettings(data: ProfileUpdateData) {
     const response = await api.patch('/settings/profile', data);
     return response.data;
   },
