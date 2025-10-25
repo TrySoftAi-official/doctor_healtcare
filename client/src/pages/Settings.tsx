@@ -7,30 +7,22 @@ import AdministratorSettings from "@/components/Settings/AdministratorSettings";
 import PatientSettings from "@/components/Settings/PatientSettings";
 import PrivacySecurity from "@/components/Settings/PrivacySecurity";
 import HelpSupport from "@/components/Settings/HelpSupport";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMobileDetection } from "@/hooks";
 
 export default function Settings() {
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const handleMenuToggle = () => {
+    console.log('Menu toggle clicked:', { currentState: isSidebarOpen, newState: !isSidebarOpen, isMobile });
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-gray-50 flex overflow-hidden relative">
       {/* Fixed Sidebar */}
-      <div className="flex-shrink-0">
+      <div className={`flex-shrink-0 ${isMobile ? 'absolute inset-y-0 left-0 z-50' : ''}`}>
         <AdminSidebar 
           isOpen={isSidebarOpen}
           onToggle={handleMenuToggle}

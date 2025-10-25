@@ -19,11 +19,26 @@ export class AppointmentsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async create(createAppointmentDto: CreateAppointmentDto, patientId: string) {
+  async create(createAppointmentDto: CreateAppointmentDto, userId: string) {
     // Check if doctor exists and is available
     const doctor = await this.doctorModel.findById(createAppointmentDto.doctorId).exec();
     if (!doctor || !doctor.isAvailable) {
       throw new BadRequestException('Doctor not found or not available');
+    }
+
+    // Find or create patient profile for the user
+    let patient = await this.patientModel.findOne({ userId }).exec();
+    if (!patient) {
+      // Create a patient profile if it doesn't exist
+      patient = new this.patientModel({
+        userId,
+        emergencyContact: {
+          name: '',
+          relationship: '',
+          phone: ''
+        }
+      });
+      await patient.save();
     }
 
     // Check for time conflicts
@@ -40,7 +55,7 @@ export class AppointmentsService {
 
     const appointment = new this.appointmentModel({
       ...createAppointmentDto,
-      patientId,
+      patientId: patient._id, // Use the patient profile ID, not the user ID
       appointmentDate: new Date(createAppointmentDto.appointmentDate),
     });
 
@@ -100,52 +115,42 @@ export class AppointmentsService {
       .sort({ appointmentDate: -1 })
       .exec();
 
-    // Ensure user data is properly attached
-    for (const appointment of appointments) {
-      // Handle patient data
-      if (appointment.patientId && (appointment.patientId as any).userId) {
-        (appointment as any).patientUser = (appointment.patientId as any).userId;
-      } else if (appointment.patientId && typeof appointment.patientId === 'string') {
-        // If patientId is a string, try to populate it manually
-        try {
-          const patient = await this.patientModel.findById(appointment.patientId).populate('userId').exec();
-          if (patient && patient.userId) {
-            (appointment as any).patientUser = patient.userId;
-          }
-        } catch (error) {
-          console.error('Error populating patient:', error);
-        }
-      }
-      
-      // Handle doctor data
-      if (appointment.doctorId && (appointment.doctorId as any).userId) {
-        (appointment as any).doctorUser = (appointment.doctorId as any).userId;
-      } else if (appointment.doctorId && typeof appointment.doctorId === 'string') {
-        // If doctorId is a string, try to populate it manually
-        try {
-          const doctor = await this.doctorModel.findById(appointment.doctorId).populate('userId').exec();
-          if (doctor && doctor.userId) {
-            (appointment as any).doctorUser = doctor.userId;
-          }
-        } catch (error) {
-          console.error('Error populating doctor:', error);
-        }
-      } else if (appointment.doctorId && typeof appointment.doctorId === 'object' && (appointment.doctorId as any).userId) {
-        // If doctorId is already populated with userId
-        (appointment as any).doctorUser = (appointment.doctorId as any).userId;
-      }
-    }
-
     // Transform appointments to include appointmentType field for frontend compatibility
     const transformedAppointments = appointments.map((appointment: any) => {
       const appointmentObj = appointment.toObject ? appointment.toObject() : appointment;
       return {
         ...appointmentObj,
         appointmentType: appointment.type,
+        // Ensure proper date formatting
+        appointmentDate: appointment.appointmentDate,
+        // Ensure proper time formatting
+        startTime: appointment.startTime,
+        endTime: appointment.endTime,
+        // Add duration calculation
+        duration: this.calculateDuration(appointment.startTime, appointment.endTime),
       };
     });
 
     return transformedAppointments as any[];
+  }
+
+  private calculateDuration(startTime: string, endTime: string): string {
+    try {
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      
+      const durationMinutes = endMinutes - startMinutes;
+      
+      if (durationMinutes <= 0) return '30 min'; // Default fallback
+      
+      return `${durationMinutes} min`;
+    } catch (error) {
+      console.error('Error calculating duration:', error);
+      return '30 min'; // Default fallback
+    }
   }
 
   async findOne(id: string): Promise<any> {

@@ -4,25 +4,15 @@ import MetricCards from "@/components/Admin/MetricCards";
 import ChartsSection from "@/components/Admin/ChartsSection";
 import RecentAppointments from "@/components/Admin/RecentAppointments";
 import QuickActions from "@/components/Admin/QuickActions";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMobileDetection } from "@/hooks";
 
 export default function AdminDashboard() {
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      // Use more responsive breakpoints
-      const isMobileView = window.innerWidth < 1024;
-      setIsMobile(isMobileView);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const handleMenuToggle = () => {
+    console.log('Menu toggle clicked:', { currentState: isSidebarOpen, newState: !isSidebarOpen, isMobile });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

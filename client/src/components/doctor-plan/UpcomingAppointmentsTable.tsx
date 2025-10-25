@@ -1,7 +1,8 @@
-import { BadgeCheck } from "lucide-react";
+// import { BadgeCheck } from "lucide-react"; // Removed unused import
 import { useQuery } from "@tanstack/react-query";
 import { appointmentService } from "@/services/appointmentService";
 import { useAuth } from "@/providers/AuthProvider";
+import { formatAppointmentTime, formatPatientName } from "@/utils/appointmentUtils";
 
 const Row = ({ avatar, name, problem, time, status }: { avatar: string; name: string; problem: string; time: string; status: "Pending" | "Confirmed" | "Completed" | "Cancelled" }) => {
   const getStatusColor = (status: string) => {
@@ -44,11 +45,13 @@ const Row = ({ avatar, name, problem, time, status }: { avatar: string; name: st
 
 export default function UpcomingAppointmentsTable() {
   const { user } = useAuth();
+
   
   // Fetch appointments for the doctor
   const { data: appointmentsData, isLoading, error } = useQuery({
     queryKey: ['doctor-upcoming-appointments', user?.id],
     queryFn: async () => {
+      // Use getAppointments() and filter on frontend since backend filtering has issues
       return await appointmentService.getAppointments();
     },
     enabled: !!user?.id,
@@ -59,11 +62,35 @@ export default function UpcomingAppointmentsTable() {
   const getUpcomingAppointments = () => {
     if (!appointmentsData) return [];
     
+    console.log('All appointments data:', appointmentsData);
+    console.log('Current user ID:', user?.id);
+    console.log('User role:', user?.role);
+    
     // Filter appointments for this doctor and get upcoming ones
-    const doctorAppointments = appointmentsData.filter((apt: any) => 
-      (apt.doctorId?._id === user?.id || apt.doctorId === user?.id) &&
-      new Date(apt.appointmentDate) >= new Date() // Only upcoming appointments
-    );
+    const doctorAppointments = appointmentsData.filter((apt: any) => {
+      console.log('Checking appointment:', {
+        appointmentId: apt._id,
+        doctorId: apt.doctorId,
+        doctorIdType: typeof apt.doctorId,
+        doctorIdId: apt.doctorId?._id,
+        doctorUserId: apt.doctorId?.userId?._id,
+        userRole: user?.role,
+        userId: user?.id
+      });
+      
+      // Check if this appointment belongs to the current doctor
+      const isDoctorAppointment = apt.doctorId?._id === user?.id || 
+                                  apt.doctorId === user?.id ||
+                                  (typeof apt.doctorId === 'object' && apt.doctorId?.userId?._id === user?.id);
+      
+      const isUpcoming = new Date(apt.appointmentDate) >= new Date();
+      
+      console.log('Appointment filter result:', { isDoctorAppointment, isUpcoming });
+      
+      return isDoctorAppointment && isUpcoming;
+    });
+
+    console.log('Filtered doctor appointments:', doctorAppointments);
 
     // Sort by appointment date
     const sortedAppointments = doctorAppointments.sort((a: any, b: any) => 
@@ -73,22 +100,11 @@ export default function UpcomingAppointmentsTable() {
     // Take only the next 5 appointments
     return sortedAppointments.slice(0, 5).map((apt: any) => ({
       id: apt._id,
-      name: (() => {
-        const firstName = apt.patientId?.userId?.firstName;
-        const lastName = apt.patientId?.userId?.lastName;
-        if (firstName && lastName) return `${firstName} ${lastName}`;
-        if (firstName) return firstName;
-        if (lastName) return lastName;
-        return 'Unknown Patient';
-      })(),
-      problem: apt.appointmentType || 'General Checkup',
-      time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit', 
-        hour12: true 
-      }),
+      name: formatPatientName(apt.patientId, apt.problemDescription),
+      problem: apt.appointmentType || apt.type || 'General Checkup',
+      time: formatAppointmentTime(apt.startTime),
       status: apt.status || 'Pending',
-      avatar: `https://ui-avatars.com/api/?name=${apt.patientId?.userId?.firstName}+${apt.patientId?.userId?.lastName}&background=random`
+      avatar: `https://ui-avatars.com/api/?name=${apt.patientId?.userId?.firstName || 'U'}+${apt.patientId?.userId?.lastName || 'P'}&background=random`
     }));
   };
 
@@ -164,7 +180,7 @@ export default function UpcomingAppointmentsTable() {
         </div>
         <div className="space-y-2">
           {upcomingAppointments.length > 0 ? (
-            upcomingAppointments.map((appointment) => (
+            upcomingAppointments.map((appointment: any) => (
               <Row
                 key={appointment.id}
                 avatar={appointment.avatar}

@@ -1,25 +1,15 @@
 import AdminSidebar from "@/components/Admin/AdminSidebar";
 import AdminHeader from "@/components/Admin/AdminHeader";
 import ReportsContent from "@/components/Reports/ReportsContent";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMobileDetection } from "@/hooks";
 
 export default function Reports() {
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      // Use more responsive breakpoints
-      const isMobileView = window.innerWidth < 1024;
-      setIsMobile(isMobileView);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const handleMenuToggle = () => {
+    console.log('Menu toggle clicked:', { currentState: isSidebarOpen, newState: !isSidebarOpen, isMobile });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

@@ -5,27 +5,17 @@ import MyDoctorsGrid from "@/components/patient-panel/MyDoctorsGrid";
 import RecentPrescriptions from "@/components/patient-panel/RecentPrescriptions";
 import UpcomingReminders from "@/components/patient-panel/UpcomingReminders";
 import AppointmentBooking from "@/pages/AppointmentBooking";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useMobileDetection } from "@/hooks";
 
 export default function PatientPanel() {
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    const checkMobile = () => {
-      // Use more responsive breakpoints
-      const isMobileView = window.innerWidth < 1024;
-      setIsMobile(isMobileView);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const handleMenuToggle = () => {
+    console.log('Menu toggle clicked:', { currentState: isSidebarOpen, newState: !isSidebarOpen, isMobile });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

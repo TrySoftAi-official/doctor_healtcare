@@ -2,6 +2,7 @@ import { CalendarClock, BadgeCheck, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { appointmentService } from "@/services/appointmentService";
 import { doctorService } from "@/services/doctorService";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface NextAppointment {
   id: string;
@@ -19,6 +20,7 @@ interface NextAppointment {
 }
 
 export default function NextAppointmentCard() {
+  const { user } = useAuth();
   const [nextAppointment, setNextAppointment] = useState<NextAppointment | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
@@ -28,11 +30,28 @@ export default function NextAppointmentCard() {
       let appointments;
       try {
         setLoading(true);
-        appointments = await appointmentService.getUpcomingAppointments();
-        console.log('Fetched appointments:', appointments);
+        // Use getAppointments() and filter on frontend since backend filtering has issues
+        appointments = await appointmentService.getAppointments();
+        console.log('Fetched all appointments:', appointments);
         
-        if (appointments && appointments.length > 0) {
-          const nextAppt = appointments[0];
+        // Filter appointments for the current patient and get upcoming ones
+        const patientAppointments = appointments.filter((apt: any) => {
+          const isPatientAppointment = apt.patientId?._id === user?.id || 
+                                      apt.patientId === user?.id ||
+                                      (typeof apt.patientId === 'object' && apt.patientId?.userId?._id === user?.id);
+          const isUpcoming = new Date(apt.appointmentDate) >= new Date();
+          return isPatientAppointment && isUpcoming;
+        });
+        
+        console.log('Filtered patient appointments:', patientAppointments);
+        
+        if (patientAppointments && patientAppointments.length > 0) {
+          // Sort by appointment date and get the next one
+          const sortedAppointments = patientAppointments.sort((a: any, b: any) => 
+            new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime()
+          );
+          
+          const nextAppt = sortedAppointments[0];
           console.log('Next appointment data:', nextAppt);
           
           let doctorData;

@@ -84,17 +84,19 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
   // Handle window resize and touch detection
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        if (isOpen && onToggle) {
-          onToggle();
-        }
-        setIsCollapsed(false);
-      }
+      const isMobileView = window.innerWidth < 1024;
+      console.log('Resize detected:', { width: window.innerWidth, isMobileView, isOpen });
+      
+      // Don't auto-close sidebar on resize - let user control it
+      console.log('Resize detected, keeping sidebar state');
+      setIsCollapsed(false);
     };
 
     // Detect touch device
     const checkTouchDevice = () => {
-      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      console.log('Touch device detection:', { isTouch, maxTouchPoints: navigator.maxTouchPoints });
+      setIsTouchDevice(isTouch);
     };
 
     checkTouchDevice();
@@ -103,12 +105,8 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
     return () => window.removeEventListener('resize', handleResize);
   }, [isOpen, onToggle]);
 
-  // Close mobile sidebar when route changes
-  useEffect(() => {
-    if (isMobile && isOpen && onToggle) {
-      onToggle();
-    }
-  }, [location.pathname, isMobile, isOpen, onToggle]);
+  // Note: Removed auto-close on route change to prevent immediate closing
+  // Users can manually close the sidebar or it will close when they click a menu item
 
   // Touch handling for swipe gestures
   useEffect(() => {
@@ -155,29 +153,45 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
     console.log('MobileOverlay render:', { isOpen, isMobile, showOverlay: isOpen && isMobile });
     return isOpen && isMobile && (
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
-        onClick={() => {
+        className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300 mobile-overlay"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           console.log('Overlay clicked');
           if (onToggle) onToggle();
         }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         onTouchEnd={(e) => {
           e.preventDefault();
+          e.stopPropagation();
           console.log('Overlay touch end');
           if (onToggle) onToggle();
         }}
+        style={{ touchAction: 'none' }}
       />
     );
   };
 
   // Debug logging
-  console.log('AdminSidebar Debug:', { isOpen, isMobile, isCollapsed });
+  console.log('AdminSidebar Debug:', { 
+    isOpen, 
+    isMobile, 
+    isCollapsed, 
+    pathname: location.pathname,
+    timestamp: new Date().toISOString()
+  });
 
   const sidebarClasses = `fixed lg:relative z-50 bg-white shadow-xl lg:shadow-lg h-screen transition-all duration-300 ease-in-out flex-shrink-0 ${
-    isMobile ? 'w-72 sm:w-80' : isCollapsed ? 'w-16' : 'w-64'
+    isMobile ? 'w-72 sm:w-80 mobile-sidebar' : isCollapsed ? 'w-16' : 'w-64'
   } ${
     isOpen ? 'translate-x-0' : isMobile ? '-translate-x-full' : 'translate-x-0'
   } ${
     isMobile ? 'top-0 left-0' : ''
+  } ${
+    isMobile ? 'touch-manipulation' : ''
   }`;
 
   return (
@@ -228,11 +242,25 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
 
             {/* Mobile Close Button */}
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Mobile close button clicked');
+                if (onToggle) onToggle();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Mobile close button touched');
                 if (onToggle) onToggle();
               }}
               className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
               aria-label="Close sidebar"
+              style={{ touchAction: 'manipulation' }}
             >
               <X className="w-6 h-6 text-gray-600" />
             </button>
@@ -278,7 +306,10 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
                   title={isCollapsed ? `${item.name} - ${item.description}` : ""}
                   onClick={() => {
                     if (isMobile && onToggle) {
-                      onToggle();
+                      // Add a small delay to prevent immediate closing
+                      setTimeout(() => {
+                        onToggle();
+                      }, 150);
                     }
                   }}
                 >

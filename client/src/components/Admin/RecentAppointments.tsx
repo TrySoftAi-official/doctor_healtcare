@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { dashboardService } from "@/services/dashboardService";
+import { formatAppointmentTime, formatPatientName, getStatusColor } from "@/utils/appointmentUtils";
 
 const RecentAppointments = () => {
   const { data: dashboardData, isLoading, error } = useQuery({
@@ -28,34 +29,15 @@ const RecentAppointments = () => {
     }
   };
 
-  const formatTime = (date: string | Date) => {
-    const appointmentDate = new Date(date);
-    return appointmentDate.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
   const appointments = dashboardData?.recentAppointments?.map((appointment: any) => {
-    // Get patient name with proper fallback logic
     const firstName = appointment.patientId?.userId?.firstName;
     const lastName = appointment.patientId?.userId?.lastName;
     
-    let patientName = 'Unknown Patient';
-    if (firstName && lastName) {
-      patientName = `${firstName} ${lastName}`;
-    } else if (firstName) {
-      patientName = firstName;
-    } else if (lastName) {
-      patientName = lastName;
-    }
-    
     return {
       id: appointment._id,
-      name: patientName,
-      type: appointment.appointmentType || 'General Checkup',
-      time: formatTime(appointment.appointmentDate),
+      name: formatPatientName(appointment.patientId, appointment.problemDescription),
+      type: appointment.appointmentType || appointment.type || 'General Checkup',
+      time: formatAppointmentTime(appointment.startTime),
       status: appointment.status,
       statusColor: getStatusColor(appointment.status),
       avatar: `https://ui-avatars.com/api/?name=${firstName || 'U'}+${lastName || 'P'}&background=random`

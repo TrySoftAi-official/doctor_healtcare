@@ -117,9 +117,25 @@ const AdminHeader = ({ onMenuToggle, isMobile = false }: AdminHeaderProps) => {
         {/* Mobile Menu Button */}
         {isMobile && (
           <button
-            onClick={onMenuToggle}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors mr-4"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Mobile menu button clicked');
+              if (onMenuToggle) onMenuToggle();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Mobile menu button touched');
+              if (onMenuToggle) onMenuToggle();
+            }}
+            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors mr-4 touch-manipulation"
             aria-label="Toggle menu"
+            style={{ touchAction: 'manipulation' }}
           >
             <Menu className="w-6 h-6 text-gray-600" />
           </button>

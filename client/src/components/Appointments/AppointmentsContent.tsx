@@ -3,6 +3,14 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { appointmentService } from "@/services/appointmentService";
 import { 
+  formatAppointmentDate,
+  formatAppointmentTime,
+  calculateDuration,
+  formatPatientName,
+  formatDoctorName,
+  getStatusColor
+} from "@/utils/appointmentUtils";
+import { 
   Calendar, 
   Clock, 
   User, 
@@ -71,18 +79,14 @@ const AppointmentsContent = () => {
           description: "Manage all system appointments and scheduling",
           appointments: appointments.map((apt: any) => ({
             id: apt._id,
-            patient: `${apt.patientId?.userId?.firstName || 'Unknown'} ${apt.patientId?.userId?.lastName || 'Patient'}`,
-            doctor: `${apt.doctorId?.userId?.firstName || 'Dr.'} ${apt.doctorId?.userId?.lastName || 'Unknown'}`,
-            date: new Date(apt.appointmentDate).toLocaleDateString(),
-            time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit', 
-              hour12: true 
-            }),
-            duration: apt.duration || "30 min",
-            type: apt.appointmentType || "Consultation",
+            patient: formatPatientName(apt.patientId, apt.problemDescription),
+            doctor: formatDoctorName(apt.doctorId),
+            date: formatAppointmentDate(apt.appointmentDate),
+            time: formatAppointmentTime(apt.startTime),
+            duration: apt.duration || calculateDuration(apt.startTime, apt.endTime),
+            type: apt.appointmentType || apt.type || "Consultation",
             status: apt.status?.toLowerCase() || "pending",
-            notes: apt.notes || "No notes available"
+            notes: apt.notes || apt.problemDescription || "No notes available"
           }))
         };
       case "Doctor":
@@ -93,25 +97,14 @@ const AppointmentsContent = () => {
             .filter((apt: any) => apt.doctorId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              patient: (() => {
-                const firstName = apt.patientId?.userId?.firstName;
-                const lastName = apt.patientId?.userId?.lastName;
-                if (firstName && lastName) return `${firstName} ${lastName}`;
-                if (firstName) return firstName;
-                if (lastName) return lastName;
-                return 'Unknown Patient';
-              })(),
-              patientPhone: apt.patientId?.phoneNumber || "No phone available",
-              date: new Date(apt.appointmentDate).toLocaleDateString(),
-              time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit', 
-                hour12: true 
-              }),
-              duration: apt.duration || "30 min",
-              type: apt.appointmentType || "Consultation",
+              patient: formatPatientName(apt.patientId, apt.problemDescription),
+              patientPhone: apt.patientId?.userId?.phone || "No phone available",
+              date: formatAppointmentDate(apt.appointmentDate),
+              time: formatAppointmentTime(apt.startTime),
+              duration: apt.duration || calculateDuration(apt.startTime, apt.endTime),
+              type: apt.appointmentType || apt.type || "Consultation",
               status: apt.status?.toLowerCase() || "pending",
-              notes: apt.notes || "No notes available",
+              notes: apt.notes || apt.problemDescription || "No notes available",
               symptoms: apt.symptoms || "No symptoms reported"
             }))
         };
@@ -123,26 +116,15 @@ const AppointmentsContent = () => {
             .filter((apt: any) => apt.patientId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              doctor: (() => {
-                const firstName = apt.doctorId?.userId?.firstName;
-                const lastName = apt.doctorId?.userId?.lastName;
-                if (firstName && lastName) return `Dr. ${firstName} ${lastName}`;
-                if (firstName) return `Dr. ${firstName}`;
-                if (lastName) return `Dr. ${lastName}`;
-                return 'Dr. Unknown';
-              })(),
+              doctor: formatDoctorName(apt.doctorId),
               doctorSpecialty: apt.doctorId?.specialty || "General Medicine",
-              date: new Date(apt.appointmentDate).toLocaleDateString(),
-              time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit', 
-                hour12: true 
-              }),
-              duration: apt.duration || "30 min",
-              type: apt.appointmentType || "Consultation",
+              date: formatAppointmentDate(apt.appointmentDate),
+              time: formatAppointmentTime(apt.startTime),
+              duration: apt.duration || calculateDuration(apt.startTime, apt.endTime),
+              type: apt.appointmentType || apt.type || "Consultation",
               status: apt.status?.toLowerCase() || "pending",
               location: apt.location || "Main Clinic",
-              notes: apt.notes || "No notes available"
+              notes: apt.notes || apt.problemDescription || "No notes available"
             }))
         };
       default:
@@ -154,17 +136,9 @@ const AppointmentsContent = () => {
     }
   };
 
+
   const data = getRoleSpecificData();
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      confirmed: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      cancelled: "bg-red-100 text-red-800",
-      completed: "bg-blue-100 text-blue-800"
-    };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
-  };
 
   const getStatusIcon = (status: string) => {
     const icons = {
