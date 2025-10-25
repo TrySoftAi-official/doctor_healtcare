@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/Admin/AdminSidebar';
 import AdminHeader from '@/components/Admin/AdminHeader';
 import { ChatInterface } from '../components/Chat/ChatInterface';
+import { MessageCircle, Heart, UserCheck } from 'lucide-react';
 
 export const PatientChat: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -23,7 +24,15 @@ export const PatientChat: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden relative">
+    <div className="h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex overflow-hidden relative">
+      {/* Mobile Overlay */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 mobile-overlay"
+          onClick={handleMenuToggle}
+        />
+      )}
+      
       {/* Fixed Sidebar */}
       <div className={`flex-shrink-0 ${isMobile ? 'absolute inset-y-0 left-0 z-50' : ''}`}>
         <AdminSidebar 
@@ -36,7 +45,7 @@ export const PatientChat: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Fixed Header */}
-        <div className="flex-shrink-0 z-40">
+        <div className="flex-shrink-0 z-40 bg-white/80 backdrop-blur-sm border-b border-purple-100">
           <AdminHeader 
             onMenuToggle={handleMenuToggle}
             isMobile={isMobile}
@@ -46,16 +55,34 @@ export const PatientChat: React.FC = () => {
         {/* Chat Content */}
         <main className="flex-1 overflow-hidden">
           <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b bg-background">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-                <p className="text-sm text-muted-foreground">
-                  Chat with your doctor
-                </p>
+            {/* Header Section */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-white">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <MessageCircle className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Messages
+                  </h1>
+                  <p className="text-sm text-gray-600 flex items-center">
+                    <Heart className="w-4 h-4 mr-1" />
+                    Chat with your doctor
+                  </p>
+                </div>
+              </div>
+              
+              {/* Mobile Stats */}
+              <div className="hidden sm:flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center space-x-1">
+                  <UserCheck className="w-4 h-4" />
+                  <span>Your Doctor</span>
+                </div>
               </div>
             </div>
             
-            <div className="flex-1 overflow-hidden">
+            {/* Chat Interface */}
+            <div className="flex-1 overflow-hidden bg-white">
               <ChatInterface />
             </div>
           </div>

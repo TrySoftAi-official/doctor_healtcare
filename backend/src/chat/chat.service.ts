@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as mongoose from 'mongoose';
 import { Message, MessageDocument } from './schemas/message.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Doctor, DoctorDocument } from '../doctors/schemas/doctor.schema';
@@ -211,8 +212,13 @@ export class ChatService {
       };
     });
 
+    // Filter out the current user from participants
+    const filteredParticipants = allParticipants.filter(participant => 
+      participant._id.toString() !== userId
+    );
+
     // Sort by last message time (most recent first), then by name
-    return allParticipants.sort((a, b) => {
+    const sortedParticipants = filteredParticipants.sort((a, b) => {
       if (a.lastMessageTime && b.lastMessageTime) {
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       }
@@ -220,39 +226,94 @@ export class ChatService {
       if (!a.lastMessageTime && b.lastMessageTime) return 1;
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
     });
+    
+    return sortedParticipants;
   }
 
   private async checkAppointmentRelationship(userId1: string, userId2: string): Promise<boolean> {
     // Check if there's an appointment between these users
-    const appointment = await this.appointmentModel.findOne({
-      $or: [
-        { 
-          $and: [
-            { patientId: { $in: await this.getPatientIdsByUserId(userId1) } },
-            { doctorId: { $in: await this.getDoctorIdsByUserId(userId2) } }
-          ]
-        },
-        { 
-          $and: [
-            { patientId: { $in: await this.getPatientIdsByUserId(userId2) } },
-            { doctorId: { $in: await this.getDoctorIdsByUserId(userId1) } }
-          ]
-        }
-      ]
-    }).exec();
+    // First, get the patient and doctor records for both users
+    const patient1 = await this.patientModel.findOne({ userId: new mongoose.Types.ObjectId(userId1) }).exec();
+    const doctor1 = await this.doctorModel.findOne({ userId: new mongoose.Types.ObjectId(userId1) }).exec();
+    const patient2 = await this.patientModel.findOne({ userId: new mongoose.Types.ObjectId(userId2) }).exec();
+    const doctor2 = await this.doctorModel.findOne({ userId: new mongoose.Types.ObjectId(userId2) }).exec();
+
+    // console.log('=== CHECKING APPOINTMENT RELATIONSHIP ===');
+    // console.log('User1:', userId1, 'Patient1:', patient1?._id, 'Doctor1:', doctor1?._id);
+    // console.log('User2:', userId2, 'Patient2:', patient2?._id, 'Doctor2:', doctor2?._id);
+
+    // Check if both users have valid roles
+    if (!patient1 && !doctor1) {
+      // console.log('User1 is neither patient nor doctor');
+      return false;
+    }
+    if (!patient2 && !doctor2) {
+      // console.log('User2 is neither patient nor doctor');
+      return false;
+    }
+
+    // If both users are the same type (both patients or both doctors), they can't chat
+    if ((patient1 && patient2) || (doctor1 && doctor2)) {
+      // console.log('Both users are the same type - cannot chat');
+      return false;
+    }
+
+    // Check for appointments between them
+    // Handle mixed data types (ObjectId vs string)
+    let appointment;
+    
+    if (patient1 && doctor2) {
+      // User1 is patient, User2 is doctor
+      // console.log('Checking: Patient1 -> Doctor2');
+      appointment = await this.appointmentModel.findOne({
+        $and: [
+          { patientId: patient1._id },
+          { 
+            $or: [
+              { doctorId: doctor2._id },
+              { doctorId: doctor2._id.toString() }
+            ]
+          }
+        ]
+      }).exec();
+    } else if (doctor1 && patient2) {
+      // User1 is doctor, User2 is patient
+      // console.log('Checking: Doctor1 -> Patient2');
+      appointment = await this.appointmentModel.findOne({
+        $and: [
+          { 
+            $or: [
+              { patientId: patient2._id },
+              { patientId: patient2._id.toString() }
+            ]
+          },
+          { doctorId: doctor1._id }
+        ]
+      }).exec();
+    }
+
+    // console.log('Found appointment:', !!appointment);
+    // if (appointment) {
+    //   console.log('Appointment details:', {
+    //     id: appointment._id,
+    //     patientId: appointment.patientId,
+    //     doctorId: appointment.doctorId,
+    //     status: appointment.status
+    //   });
+    // }
+
+    // If no appointment found, check if we can allow chat based on roles
+    if (!appointment) {
+      // Allow doctors to chat with any patient (for now)
+      if ((doctor1 && patient2) || (doctor2 && patient1)) {
+        // console.log('Allowing chat between doctor and patient (no specific appointment required)');
+        return true;
+      }
+    }
 
     return !!appointment;
   }
 
-  private async getPatientIdsByUserId(userId: string): Promise<string[]> {
-    const patients = await this.patientModel.find({ userId }).select('_id').exec();
-    return patients.map(patient => patient._id.toString());
-  }
-
-  private async getDoctorIdsByUserId(userId: string): Promise<string[]> {
-    const doctors = await this.doctorModel.find({ userId }).select('_id').exec();
-    return doctors.map(doctor => doctor._id.toString());
-  }
 
   private async getAppointmentParticipants(userId: string) {
     // Get all appointments for this user (as patient or doctor)
@@ -268,8 +329,19 @@ export class ChatService {
       {
         $lookup: {
           from: 'doctors',
-          localField: 'doctorId',
-          foreignField: '_id',
+          let: { doctorId: '$doctorId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$_id', '$$doctorId'] },
+                    { $eq: [{ $toString: '$_id' }, '$$doctorId'] }
+                  ]
+                }
+              }
+            }
+          ],
           as: 'doctor'
         }
       },
@@ -304,8 +376,8 @@ export class ChatService {
       {
         $match: {
           $or: [
-            { 'patientUser._id': userId },
-            { 'doctorUser._id': userId }
+            { 'patientUser._id': new mongoose.Types.ObjectId(userId) },
+            { 'doctorUser._id': new mongoose.Types.ObjectId(userId) }
           ]
         }
       },
@@ -313,42 +385,42 @@ export class ChatService {
         $project: {
           _id: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               '$doctorUser._id',
               '$patientUser._id'
             ]
           },
           firstName: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               '$doctorUser.firstName',
               '$patientUser.firstName'
             ]
           },
           lastName: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               '$doctorUser.lastName',
               '$patientUser.lastName'
             ]
           },
           email: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               '$doctorUser.email',
               '$patientUser.email'
             ]
           },
           profileImage: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               '$doctorUser.profileImage',
               '$patientUser.profileImage'
             ]
           },
           role: {
             $cond: [
-              { $eq: ['$patientUser._id', userId] },
+              { $eq: ['$patientUser._id', new mongoose.Types.ObjectId(userId)] },
               'doctor',
               'patient'
             ]

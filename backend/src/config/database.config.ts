@@ -8,7 +8,7 @@ export class DatabaseConfig implements MongooseOptionsFactory {
 
   createMongooseOptions(): MongooseModuleOptions {
     return {
-      uri: this.configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/healthcare_db',
+      uri: this.configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/healthcare_system',
     };
   }
 }

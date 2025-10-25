@@ -97,6 +97,7 @@ export const useChat = (): UseChatReturn => {
     });
 
     newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
       setIsConnected(false);
     });
 
@@ -135,6 +136,10 @@ export const useChat = (): UseChatReturn => {
         }
       };
       setMessages(prev => [...prev, fullMessage]);
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket error received:', error);
     });
 
     newSocket.on('message_sent', (message: SocketMessage) => {
@@ -215,9 +220,12 @@ export const useChat = (): UseChatReturn => {
   // Load participants
   const loadParticipants = useCallback(async () => {
     try {
+      console.log('useChat: Loading participants...');
       const response = await chatService.getChatParticipants();
+      console.log('useChat: Participants response:', response);
       setParticipants(response);
     } catch (error) {
+      console.error('Failed to load participants:', error);
     }
   }, []);
 
@@ -345,7 +353,7 @@ export const useChat = (): UseChatReturn => {
       loadUnreadCount();
       processPendingMessages();
     }
-  }, [isConnected, user, loadParticipants, loadUnreadCount, processPendingMessages]);
+  }, [isConnected, user]);
 
   // Cleanup typing timeouts
   useEffect(() => {

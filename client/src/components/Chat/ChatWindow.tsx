@@ -130,10 +130,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
 
   const isParticipantTyping = typingUsers.get(participant._id) || false;
 
+  // Debug participant data
+  console.log('ChatWindow participant:', participant);
+
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-background">
+      <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-white">
         <Button
           variant="ghost"
           size="sm"
@@ -159,10 +162,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm truncate">
-            {participant.firstName} {participant.lastName}
+          <h3 className="font-semibold text-sm text-gray-900 truncate">
+            {participant.firstName || 'Unknown'} {participant.lastName || 'User'}
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-500">
             {isUserOnline(participant._id) ? 'Online' : 'Offline'}
             {isParticipantTyping && ' • Typing...'}
           </p>
@@ -182,15 +185,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 bg-gray-50">
         <div className="space-y-4">
-          {messages.map((message) => {
+          {messages.map((message, index) => {
             const isOwn = message.senderId._id === participant._id;
             const isRead = message.read;
             
             return (
               <div
-                key={message._id}
+                key={`${message._id}-${index}`}
                 className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`flex gap-2 max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -265,12 +268,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="p-4 border-t bg-background">
+      <div className="p-4 border-t border-gray-200 bg-white">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-          <Button type="button" variant="ghost" size="sm">
+          <Button type="button" variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
             <Paperclip className="h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" size="sm">
+          <Button type="button" variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
             <ImageIcon className="h-4 w-4" />
           </Button>
           
@@ -278,11 +281,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             autoComplete="off"
           />
           
-          <Button type="submit" size="sm" disabled={!newMessage.trim()}>
+          <Button 
+            type="submit" 
+            size="sm" 
+            disabled={!newMessage.trim()}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcare_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/healthcare_system';
 
 async function addDatabaseIndexes() {
   const client = new MongoClient(MONGODB_URI);

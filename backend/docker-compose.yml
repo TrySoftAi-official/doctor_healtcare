@@ -11,7 +11,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
-      MONGO_INITDB_DATABASE: healthcare_db
+      MONGO_INITDB_DATABASE: healthcare_system
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -25,7 +25,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MONGODB_URI: mongodb://admin:password123@mongodb:27017/healthcare_db
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/healthcare_system
       JWT_SECRET: xaki1253ya
       JWT_EXPIRES_IN: 7d
       PORT: 3000

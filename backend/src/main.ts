@@ -11,9 +11,13 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CustomValidationPipe } from './common/pipes/validation.pipe';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // WebSocket adapter
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Security middleware
   app.use(helmet());
@@ -22,6 +26,12 @@ async function bootstrap() {
   // Serve static files from uploads directory
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
+  });
+  
+  // Add a simple route to test static file serving
+  app.use('/uploads', (req, res, next) => {
+    console.log('Static file request:', req.url);
+    next();
   });
   app.use(cors({
     origin: [

@@ -56,7 +56,7 @@ A comprehensive NestJS backend API for a healthcare management system with Mongo
 
 4. Update the `.env` file with your configuration:
    ```env
-   MONGODB_URI=mongodb://localhost:27017/healthcare_db
+   MONGODB_URI=mongodb://localhost:27017/healthcare_system
    JWT_SECRET=xaki1253ya
    JWT_EXPIRES_IN=7d
    PORT=3000
@@ -243,7 +243,7 @@ npm run format
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/healthcare_db` |
+| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/healthcare_system` |
 | `JWT_SECRET` | JWT secret key | `your-super-secret-jwt-key-here` |
 | `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
 | `PORT` | Server port | `3000` |
