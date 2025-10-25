@@ -31,13 +31,8 @@ const ProfileInformation = () => {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      console.log("Loading profile data...");
-      console.log("User from auth:", user);
-      console.log("Token exists:", !!TokenManager.getToken());
-      console.log("Is authenticated:", TokenManager.isAuthenticated());
       
       const response = await settingsService.getProfileSettings();
-      console.log("Profile data response:", response);
       
       if (response.user) {
         setFormData({
@@ -50,11 +45,8 @@ const ProfileInformation = () => {
           profileImage: response.user.profileImage || "",
           bio: response.profile?.bio || ""
         });
-        console.log("Form data set:", formData);
       }
     } catch (error: any) {
-      console.error("Error loading profile data:", error);
-      console.error("Error response:", error.response?.data);
       toast.error("Failed to load profile data");
     } finally {
       setLoading(false);
@@ -114,7 +106,6 @@ const ProfileInformation = () => {
       }
 
       const result = await response.json();
-      console.log('Upload result:', result);
       
       // Update the form data with the new image URL
       setFormData(prev => ({
@@ -127,7 +118,6 @@ const ProfileInformation = () => {
       
       toast.success('Profile image uploaded successfully');
     } catch (error: any) {
-      console.error('Image upload error:', error);
       toast.error(`Failed to upload image: ${error.message}`);
       // Clear preview on error
       setImagePreview(null);
@@ -156,15 +146,11 @@ const ProfileInformation = () => {
         }
       };
       
-      console.log("Sending update data:", updateData);
       const response = await settingsService.updateProfileSettings(updateData);
-      console.log("Update response:", response);
       toast.success("Profile updated successfully");
       // Reload the data to show updated information
       await loadProfileData();
     } catch (error: any) {
-      console.error("Error updating profile:", error);
-      console.error("Error details:", error.response?.data || error.message);
       toast.error(`Failed to update profile: ${error.response?.data?.message || error.message}`);
     } finally {
       setSaving(false);

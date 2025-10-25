@@ -77,7 +77,6 @@ export class UsersService {
         ];
       }
 
-      console.log('Search query:', searchQuery);
 
       const users = await this.userModel
         .find(searchQuery)
@@ -86,13 +85,9 @@ export class UsersService {
         .limit(50) // Limit results
         .exec();
 
-      console.log('Found users:', users.length);
       return users;
     } catch (error) {
-      console.error('Error searching users for conversation:', error);
-      console.error('Error stack:', error.stack);
       // Return empty array instead of throwing error
-      console.log('Returning empty array due to error');
       return [];
     }
   }

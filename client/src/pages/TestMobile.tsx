@@ -8,7 +8,6 @@ export default function TestMobile() {
   useEffect(() => {
     const checkMobile = () => {
       const isMobileView = window.innerWidth < 1024;
-      console.log('Mobile detection:', { width: window.innerWidth, isMobileView });
       setIsMobile(isMobileView);
     };
     
@@ -18,7 +17,6 @@ export default function TestMobile() {
   }, []);
 
   const handleMenuToggle = () => {
-    console.log('Menu toggle clicked:', { isMobile, isSidebarOpen });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

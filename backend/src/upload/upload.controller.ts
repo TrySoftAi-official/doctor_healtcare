@@ -32,12 +32,6 @@ export class UploadController {
   @ApiOperation({ summary: 'Upload profile image' })
   @ApiConsumes('multipart/form-data')
   uploadProfileImage(@UploadedFile() file: Express.Multer.File) {
-    console.log('Profile image upload request:', {
-      originalName: file?.originalname,
-      mimetype: file?.mimetype,
-      size: file?.size,
-      fieldname: file?.fieldname
-    });
     return this.uploadService.uploadFile(file);
   }
 

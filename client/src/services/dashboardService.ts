@@ -7,7 +7,6 @@ export const dashboardService = {
       const response = await api.get('/dashboard');
       return response.data;
     } catch (error) {
-      console.error('Dashboard API error:', error);
       throw error;
     }
   },
@@ -17,7 +16,6 @@ export const dashboardService = {
       const response = await api.get('/dashboard/stats');
       return response.data;
     } catch (error) {
-      console.error('Quick stats API error:', error);
       throw error;
     }
   },

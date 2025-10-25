@@ -72,7 +72,6 @@ export default function AppointmentForm() {
         
         setDoctors(transformedDoctors);
       } catch (error) {
-        console.error('Error fetching doctors:', error);
       } finally {
         setLoading(false);
       }
@@ -117,7 +116,6 @@ export default function AppointmentForm() {
         notes: "",
       });
     } catch (error) {
-      console.error('Error booking appointment:', error);
       alert('Failed to book appointment. Please try again.');
     } finally {
       setSubmitting(false);

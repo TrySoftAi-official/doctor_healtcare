@@ -51,17 +51,12 @@ const AdminHeader = ({ onMenuToggle, isMobile = false }: AdminHeaderProps) => {
     retry: 1,
   });
 
-  // Log errors for debugging
-  if (error) {
-    console.error('Dashboard data fetch error:', error);
-  }
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       signOut();
     } catch (error) {
-      console.error('Logout error:', error);
     } finally {
       setIsLoggingOut(false);
     }
@@ -106,10 +101,6 @@ const AdminHeader = ({ onMenuToggle, isMobile = false }: AdminHeaderProps) => {
 
   const roleInfo = getRoleInfo();
 
-  // Debug logging
-  console.log('Dashboard data:', dashboardData);
-  console.log('User:', user);
-  console.log('Error:', error);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-4 lg:px-6 py-4">
@@ -120,7 +111,6 @@ const AdminHeader = ({ onMenuToggle, isMobile = false }: AdminHeaderProps) => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Mobile menu button clicked');
               if (onMenuToggle) onMenuToggle();
             }}
             onTouchStart={(e) => {
@@ -130,7 +120,6 @@ const AdminHeader = ({ onMenuToggle, isMobile = false }: AdminHeaderProps) => {
             onTouchEnd={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              console.log('Mobile menu button touched');
               if (onMenuToggle) onMenuToggle();
             }}
             className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors mr-4 touch-manipulation"

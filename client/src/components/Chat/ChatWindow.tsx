@@ -92,7 +92,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ participant, onBack }) =
       setNewMessage('');
       stopTyping(participant._id);
     } catch (error) {
-      console.error('Error sending message:', error);
     }
   };
 

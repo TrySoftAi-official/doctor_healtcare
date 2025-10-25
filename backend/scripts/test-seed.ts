@@ -93,14 +93,8 @@ async function seedTestData() {
       problemDescription: 'Follow-up consultation'
     });
 
-    console.log('Test data created successfully!');
-    console.log('Admin User:', adminUser.email);
-    console.log('Doctor User:', doctorUser.email);
-    console.log('Patient User:', patientUser.email);
-    console.log('Appointments created:', appointment1._id, appointment2._id);
 
   } catch (error) {
-    console.error('Error seeding data:', error);
   } finally {
     await app.close();
   }

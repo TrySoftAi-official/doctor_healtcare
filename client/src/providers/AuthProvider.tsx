@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       TokenManager.setToken(response.access_token);
       setUser(response.user);
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   };

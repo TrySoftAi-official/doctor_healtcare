@@ -17,14 +17,6 @@ export const useMobileDetection = (options: MobileDetectionOptions = {}) => {
       const isMobileView = window.innerWidth < breakpoint;
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      console.log('Mobile detection:', { 
-        width: window.innerWidth, 
-        breakpoint, 
-        isMobileView, 
-        isTouch,
-        maxTouchPoints: navigator.maxTouchPoints,
-        timestamp: new Date().toISOString()
-      });
       
       setIsMobile(isMobileView);
       setIsTouchDevice(isTouch);

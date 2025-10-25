@@ -100,11 +100,8 @@ const AdministratorPatients: React.FC = () => {
     setLoading(true);
     try {
       const data = await patientService.getPatients();
-      console.log('Fetched patients:', data);
-      console.log('First patient structure:', data[0]);
       setPatients(data);
     } catch (error) {
-      console.error('Error fetching patients:', error);
       message.error('Failed to fetch patients: ' + ((error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error'));
     } finally {
       setLoading(false);

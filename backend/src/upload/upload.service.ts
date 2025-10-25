@@ -10,12 +10,6 @@ export class UploadService {
       throw new Error('No file uploaded');
     }
 
-    console.log('Uploading file:', {
-      filename: file.filename,
-      originalName: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size
-    });
 
     const fileUrl = `${this.configService.get('APP_URL') || 'http://localhost:3000'}/uploads/${file.filename}`;
     
@@ -27,7 +21,6 @@ export class UploadService {
       url: fileUrl,
     };
 
-    console.log('File upload result:', result);
     return result;
   }
 

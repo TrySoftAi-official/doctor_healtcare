@@ -50,7 +50,6 @@ const DoctorSettings = () => {
         }));
       }
     } catch (error) {
-      console.error("Error loading doctor data:", error);
       toast.error("Failed to load doctor settings");
     } finally {
       setLoading(false);
@@ -99,7 +98,6 @@ const DoctorSettings = () => {
       await settingsService.updateDoctorSettings(formData);
       toast.success("Doctor settings updated successfully");
     } catch (error) {
-      console.error("Error updating doctor settings:", error);
       toast.error("Failed to update doctor settings");
     } finally {
       setSaving(false);

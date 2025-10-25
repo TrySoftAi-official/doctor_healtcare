@@ -62,21 +62,9 @@ export default function UpcomingAppointmentsTable() {
   const getUpcomingAppointments = () => {
     if (!appointmentsData) return [];
     
-    console.log('All appointments data:', appointmentsData);
-    console.log('Current user ID:', user?.id);
-    console.log('User role:', user?.role);
     
     // Filter appointments for this doctor and get upcoming ones
     const doctorAppointments = appointmentsData.filter((apt: any) => {
-      console.log('Checking appointment:', {
-        appointmentId: apt._id,
-        doctorId: apt.doctorId,
-        doctorIdType: typeof apt.doctorId,
-        doctorIdId: apt.doctorId?._id,
-        doctorUserId: apt.doctorId?.userId?._id,
-        userRole: user?.role,
-        userId: user?.id
-      });
       
       // Check if this appointment belongs to the current doctor
       const isDoctorAppointment = apt.doctorId?._id === user?.id || 
@@ -85,12 +73,10 @@ export default function UpcomingAppointmentsTable() {
       
       const isUpcoming = new Date(apt.appointmentDate) >= new Date();
       
-      console.log('Appointment filter result:', { isDoctorAppointment, isUpcoming });
       
       return isDoctorAppointment && isUpcoming;
     });
 
-    console.log('Filtered doctor appointments:', doctorAppointments);
 
     // Sort by appointment date
     const sortedAppointments = doctorAppointments.sort((a: any, b: any) => 

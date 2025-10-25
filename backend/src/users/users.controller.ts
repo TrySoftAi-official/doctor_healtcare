@@ -52,7 +52,6 @@ export class UsersController {
   async testUserData(@Request() req) {
     try {
       const user = await this.usersService.findOne(req.user.userId);
-      console.log('User data structure:', JSON.stringify(user, null, 2));
       return {
         message: 'User data logged to console',
         user: {
@@ -64,7 +63,6 @@ export class UsersController {
         }
       };
     } catch (error) {
-      console.error('Error fetching user data:', error);
       throw error;
     }
   }

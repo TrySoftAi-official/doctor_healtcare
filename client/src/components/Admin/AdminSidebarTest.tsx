@@ -7,7 +7,6 @@ interface AdminSidebarTestProps {
 }
 
 const AdminSidebarTest = ({ onToggle, isMobile = false, isOpen = false }: AdminSidebarTestProps) => {
-  console.log('AdminSidebarTest Debug:', { isOpen, isMobile });
 
   const sidebarClasses = `fixed z-50 bg-white shadow-xl h-screen transition-all duration-300 ease-in-out ${
     isMobile ? 'w-72 top-0 left-0' : 'w-64'
@@ -22,7 +21,6 @@ const AdminSidebarTest = ({ onToggle, isMobile = false, isOpen = false }: AdminS
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => {
-            console.log('Overlay clicked');
             if (onToggle) onToggle();
           }}
         />
@@ -36,7 +34,6 @@ const AdminSidebarTest = ({ onToggle, isMobile = false, isOpen = false }: AdminS
             {isMobile && (
               <button
                 onClick={() => {
-                  console.log('Close button clicked');
                   if (onToggle) onToggle();
                 }}
                 className="w-8 h-8 bg-gray-200 rounded"

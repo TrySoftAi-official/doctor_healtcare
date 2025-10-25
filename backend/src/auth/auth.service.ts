@@ -29,7 +29,6 @@ export class AuthService {
       }
       return null;
     } catch (error) {
-      console.error('validateUser error:', error);
       throw error;
     }
   }
@@ -43,7 +42,6 @@ export class AuthService {
       }
       return null;
     } catch (error) {
-      console.error('validateUserByEmail error:', error);
       throw error;
     }
   }
@@ -76,7 +74,6 @@ export class AuthService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      console.error('Login error:', error);
       throw new BadRequestException('Login failed. Please try again.');
     }
   }
@@ -109,7 +106,6 @@ export class AuthService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      console.error('Login by email error:', error);
       throw new BadRequestException('Login failed. Please try again.');
     }
   }
@@ -172,7 +168,6 @@ export class AuthService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      console.error('Registration error:', error);
       throw new BadRequestException('Registration failed. Please try again.');
     }
   }
@@ -193,7 +188,6 @@ export class AuthService {
     });
 
     // TODO: Send email with reset token
-    console.log(`Reset token for ${user.email}: ${resetToken}`);
 
     return { message: 'Password reset instructions sent to your email' };
   }

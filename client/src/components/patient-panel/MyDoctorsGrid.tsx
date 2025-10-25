@@ -95,7 +95,6 @@ export default function MyDoctorsGrid() {
         
         setDoctors(transformedDoctors);
       } catch (error) {
-        console.error('Error fetching my doctors:', error);
       } finally {
         setLoading(false);
       }

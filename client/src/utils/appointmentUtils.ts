@@ -10,7 +10,6 @@ export const formatAppointmentDate = (dateString: string | Date): string => {
       year: 'numeric'
     });
   } catch (error) {
-    console.error('Error formatting date:', error);
     return 'Invalid Date';
   }
 };
@@ -25,7 +24,6 @@ export const formatAppointmentTime = (timeString: string): string => {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   } catch (error) {
-    console.error('Error formatting time:', error);
     return 'Invalid Time';
   }
 };
@@ -46,7 +44,6 @@ export const calculateDuration = (startTime: string, endTime: string): string =>
     
     return `${durationMinutes} min`;
   } catch (error) {
-    console.error('Error calculating duration:', error);
     return '30 min';
   }
 };

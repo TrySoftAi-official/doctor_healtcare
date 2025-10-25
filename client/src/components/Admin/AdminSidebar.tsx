@@ -85,17 +85,14 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
   useEffect(() => {
     const handleResize = () => {
       const isMobileView = window.innerWidth < 1024;
-      console.log('Resize detected:', { width: window.innerWidth, isMobileView, isOpen });
       
       // Don't auto-close sidebar on resize - let user control it
-      console.log('Resize detected, keeping sidebar state');
       setIsCollapsed(false);
     };
 
     // Detect touch device
     const checkTouchDevice = () => {
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      console.log('Touch device detection:', { isTouch, maxTouchPoints: navigator.maxTouchPoints });
       setIsTouchDevice(isTouch);
     };
 
@@ -150,14 +147,12 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
 
   // Mobile overlay with improved touch handling
   const MobileOverlay = () => {
-    console.log('MobileOverlay render:', { isOpen, isMobile, showOverlay: isOpen && isMobile });
     return isOpen && isMobile && (
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300 mobile-overlay"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Overlay clicked');
           if (onToggle) onToggle();
         }}
         onTouchStart={(e) => {
@@ -167,7 +162,6 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
         onTouchEnd={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Overlay touch end');
           if (onToggle) onToggle();
         }}
         style={{ touchAction: 'none' }}
@@ -175,14 +169,6 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
     );
   };
 
-  // Debug logging
-  console.log('AdminSidebar Debug:', { 
-    isOpen, 
-    isMobile, 
-    isCollapsed, 
-    pathname: location.pathname,
-    timestamp: new Date().toISOString()
-  });
 
   const sidebarClasses = `fixed lg:relative z-50 bg-white shadow-xl lg:shadow-lg h-screen transition-all duration-300 ease-in-out flex-shrink-0 ${
     isMobile ? 'w-72 sm:w-80 mobile-sidebar' : isCollapsed ? 'w-16' : 'w-64'
@@ -245,7 +231,6 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Mobile close button clicked');
                 if (onToggle) onToggle();
               }}
               onTouchStart={(e) => {
@@ -255,7 +240,6 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
               onTouchEnd={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Mobile close button touched');
                 if (onToggle) onToggle();
               }}
               className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"

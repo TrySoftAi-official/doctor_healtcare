@@ -128,7 +128,6 @@ export default function Signup() {
       message.success("Registration successful!");
       // Navigation will be handled by useEffect when user state updates
     } catch (error: any) {
-      console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || error.message || "Registration failed. Please try again.";
       setErrors({ general: errorMessage });
       message.error(errorMessage);

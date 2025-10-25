@@ -9,17 +9,10 @@ export const ChatDebug: React.FC = () => {
   const { isConnected, participants, loadParticipants } = useChat();
 
   const handleTestConnection = async () => {
-    console.log('Testing connection...');
-    console.log('User:', user);
-    console.log('Token:', localStorage.getItem('access_token'));
-    console.log('Socket URL:', config.socketUrl);
     
     try {
-      console.log('Testing REST API...');
       const participants = await chatService.getChatParticipants();
-      console.log('Participants from REST API:', participants);
     } catch (error) {
-      console.error('REST API Error:', error);
     }
     
     loadParticipants();

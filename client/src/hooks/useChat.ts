@@ -68,16 +68,10 @@ export const useChat = (): UseChatReturn => {
   useEffect(() => {
     const token = TokenManager.getToken();
     if (!token || !user || TokenManager.isTokenExpired()) {
-      console.log('No valid token or user, skipping socket connection:', { 
-        token: !!token, 
-        user: !!user, 
-        expired: TokenManager.isTokenExpired() 
-      });
       return;
     }
     
     const socketUrl = config.socketUrl;
-    console.log('Connecting to socket:', `${socketUrl}/chat`);
 
     const newSocket = io(`${socketUrl}/chat`, {
       auth: {
@@ -93,35 +87,28 @@ export const useChat = (): UseChatReturn => {
 
     // Connection events
     newSocket.on('connect', () => {
-      console.log('Connected to chat server');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('Disconnected from chat server:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
       setIsConnected(false);
     });
 
     newSocket.on('reconnect', (attemptNumber) => {
-      console.log('Socket reconnected after', attemptNumber, 'attempts');
       setIsConnected(true);
     });
 
     newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('Socket reconnection attempt:', attemptNumber);
     });
 
     newSocket.on('reconnect_error', (error) => {
-      console.error('Socket reconnection error:', error);
     });
 
     newSocket.on('reconnect_failed', () => {
-      console.error('Socket reconnection failed');
       setIsConnected(false);
     });
 
@@ -204,7 +191,6 @@ export const useChat = (): UseChatReturn => {
 
     // Error handling
     newSocket.on('error', (error: any) => {
-      console.error('Socket error:', error);
     });
 
     setSocket(newSocket);
@@ -221,7 +207,6 @@ export const useChat = (): UseChatReturn => {
       setMessages(response.messages);
       currentParticipantRef.current = participantId;
     } catch (error) {
-      console.error('Error loading chat history:', error);
     }
   }, []);
 
@@ -231,7 +216,6 @@ export const useChat = (): UseChatReturn => {
       const response = await chatService.getChatParticipants();
       setParticipants(response);
     } catch (error) {
-      console.error('Error loading participants:', error);
     }
   }, []);
 
@@ -241,7 +225,6 @@ export const useChat = (): UseChatReturn => {
       const response = await chatService.getUnreadCount();
       setUnreadCount(response.count);
     } catch (error) {
-      console.error('Error loading unread count:', error);
     }
   }, []);
 
@@ -256,7 +239,6 @@ export const useChat = (): UseChatReturn => {
       // Also send via REST API for persistence
       await chatService.sendMessage(data);
     } catch (error) {
-      console.error('Error sending message:', error);
     }
   }, [socket]);
 
@@ -280,7 +262,6 @@ export const useChat = (): UseChatReturn => {
         socket.emit('mark_as_read', { messageId });
       }
     } catch (error) {
-      console.error('Error marking message as read:', error);
     }
   }, [socket]);
 
@@ -289,7 +270,6 @@ export const useChat = (): UseChatReturn => {
     try {
       await chatService.markAllMessagesAsRead(participantId);
     } catch (error) {
-      console.error('Error marking all messages as read:', error);
     }
   }, []);
 

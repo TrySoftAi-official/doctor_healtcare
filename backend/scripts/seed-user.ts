@@ -20,10 +20,8 @@ async function seedUser() {
 
     try {
       const user = await authService.register(userData);
-      console.log('User created:', user.user.email);
     } catch (error) {
       if (error.message.includes('already exists')) {
-        console.log('User already exists:', userData.email);
       } else {
         throw error;
       }
@@ -43,18 +41,14 @@ async function seedUser() {
 
     try {
       const doctor = await authService.register(doctorData);
-      console.log('Doctor created:', doctor.user.email);
     } catch (error) {
       if (error.message.includes('already exists')) {
-        console.log('Doctor already exists:', doctorData.email);
       } else {
         throw error;
       }
     }
 
-    console.log('Seeding completed successfully!');
   } catch (error) {
-    console.error('Error seeding data:', error);
   } finally {
     await app.close();
   }

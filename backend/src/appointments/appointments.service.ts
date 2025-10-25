@@ -148,7 +148,6 @@ export class AppointmentsService {
       
       return `${durationMinutes} min`;
     } catch (error) {
-      console.error('Error calculating duration:', error);
       return '30 min'; // Default fallback
     }
   }

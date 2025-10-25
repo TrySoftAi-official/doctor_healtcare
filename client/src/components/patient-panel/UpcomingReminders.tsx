@@ -121,7 +121,6 @@ export default function UpcomingReminders() {
         
         setReminders(reminderData);
       } catch (error) {
-        console.error('Error fetching reminders:', error);
       } finally {
         setLoading(false);
       }
@@ -158,7 +157,6 @@ export default function UpcomingReminders() {
         )
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
     }
   };
 

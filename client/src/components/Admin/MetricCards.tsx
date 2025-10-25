@@ -11,9 +11,6 @@ const MetricCards = () => {
     retry: 1,
   });
 
-  // Debug logging
-  console.log('Dashboard data in MetricCards:', dashboardData);
-  console.log('Metrics:', dashboardData?.metrics);
 
   if (isLoading) {
     return (

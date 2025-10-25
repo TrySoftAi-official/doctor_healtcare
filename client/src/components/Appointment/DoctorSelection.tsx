@@ -32,18 +32,10 @@ const DoctorSelection = () => {
     const fetchDoctors = async () => {
       try {
         setLoading(true);
-        console.log('Fetching doctors...');
-        console.log('Auth token:', localStorage.getItem('access_token'));
         const data = await doctorService.getDoctors({ isAvailable: true });
-        console.log('Raw API response:', data);
-        console.log('API response length:', data?.length);
-        console.log('First doctor raw data:', data[0]);
-        console.log('First doctor keys:', data[0] ? Object.keys(data[0]) : 'No data');
         
         // Transform the API response to match our expected format
         const transformedDoctors = data.map((doctor: any) => {
-          console.log('Processing doctor:', doctor);
-          console.log('Doctor user data:', doctor.user);
           
           // Handle different possible data structures
           let doctorName = 'Unknown Doctor';
@@ -73,14 +65,11 @@ const DoctorSelection = () => {
             avatar: doctorAvatar,
           };
           
-          console.log('Transformed doctor:', transformed);
           return transformed;
         });
         setDoctors(transformedDoctors);
         setIsUsingFallbackData(false);
       } catch (error: any) {
-        console.error('Error fetching doctors:', error);
-        console.error('Error details:', error.response?.data || error.message);
         // Set empty array if API fails - no fallback data
         setIsUsingFallbackData(true);
         setDoctors([]);

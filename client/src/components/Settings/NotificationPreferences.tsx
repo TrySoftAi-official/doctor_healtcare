@@ -31,7 +31,6 @@ const NotificationPreferences = () => {
         }));
       }
     } catch (error) {
-      console.error("Error loading notification data:", error);
       toast.error("Failed to load notification preferences");
     } finally {
       setLoading(false);
@@ -53,7 +52,6 @@ const NotificationPreferences = () => {
       await settingsService.updateNotificationPreferences(formData);
       toast.success("Notification preferences updated successfully");
     } catch (error) {
-      console.error("Error updating notification preferences:", error);
       toast.error("Failed to update notification preferences");
     } finally {
       setSaving(false);

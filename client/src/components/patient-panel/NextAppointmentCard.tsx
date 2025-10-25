@@ -32,7 +32,6 @@ export default function NextAppointmentCard() {
         setLoading(true);
         // Use getAppointments() and filter on frontend since backend filtering has issues
         appointments = await appointmentService.getAppointments();
-        console.log('Fetched all appointments:', appointments);
         
         // Filter appointments for the current patient and get upcoming ones
         const patientAppointments = appointments.filter((apt: any) => {
@@ -43,7 +42,6 @@ export default function NextAppointmentCard() {
           return isPatientAppointment && isUpcoming;
         });
         
-        console.log('Filtered patient appointments:', patientAppointments);
         
         if (patientAppointments && patientAppointments.length > 0) {
           // Sort by appointment date and get the next one
@@ -52,7 +50,6 @@ export default function NextAppointmentCard() {
           );
           
           const nextAppt = sortedAppointments[0];
-          console.log('Next appointment data:', nextAppt);
           
           let doctorData;
           
@@ -60,15 +57,12 @@ export default function NextAppointmentCard() {
           if (nextAppt.doctorId && typeof nextAppt.doctorId === 'object') {
             // Doctor data is already populated
             doctorData = nextAppt.doctorId;
-            console.log('Using populated doctor data:', doctorData);
           } else {
             // Fetch doctor details separately
             doctorData = await doctorService.getDoctor(nextAppt.doctorId);
-            console.log('Fetched doctor data:', doctorData);
           }
           
           // Handle the doctor data structure properly
-          console.log('Doctor data structure:', JSON.stringify(doctorData, null, 2));
           
           let doctorName = 'Unknown Doctor';
           let doctorSpecialty = 'General Medicine';
@@ -100,9 +94,6 @@ export default function NextAppointmentCard() {
             }
           }
           
-          console.log('Processed doctor info:', { doctorName, doctorSpecialty, doctorAvatar });
-          console.log('Raw doctor data specialty:', doctorData.specialty);
-          console.log('Raw doctor data:', doctorData);
           
           // Handle appointment data structure
           const appointmentData = {
@@ -122,12 +113,9 @@ export default function NextAppointmentCard() {
             }
           };
           
-          console.log('Processed appointment data:', appointmentData);
           setNextAppointment(appointmentData);
         }
       } catch (error) {
-        console.error('Error fetching next appointment:', error);
-        console.error('Appointment data:', appointments);
       } finally {
         setLoading(false);
       }
@@ -168,7 +156,6 @@ export default function NextAppointmentCard() {
   }
 
   // Debug: Log the final appointment data
-  console.log('Final appointment data for rendering:', nextAppointment);
 
   const formatDate = (dateString: string) => {
     try {
@@ -179,7 +166,6 @@ export default function NextAppointmentCard() {
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.error('Invalid date string:', dateString);
         return 'Invalid Date';
       }
       
@@ -195,7 +181,6 @@ export default function NextAppointmentCard() {
         });
       }
     } catch (error) {
-      console.error('Error formatting date:', error, dateString);
       return 'Invalid Date';
     }
   };
@@ -203,7 +188,6 @@ export default function NextAppointmentCard() {
   const formatTime = (timeString: string) => {
     try {
       if (!timeString) {
-        console.error('Empty time string');
         return 'Invalid Time';
       }
       
@@ -213,7 +197,6 @@ export default function NextAppointmentCard() {
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes} ${ampm}`;
     } catch (error) {
-      console.error('Error formatting time:', error, timeString);
       return 'Invalid Time';
     }
   };

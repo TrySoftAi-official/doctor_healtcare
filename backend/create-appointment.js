@@ -43,14 +43,12 @@ const Appointment = mongoose.model('Appointment', AppointmentSchema);
 
 async function createAppointment() {
   try {
-    console.log('Connecting to database...');
     
     // Find the doctor and patient records
     const doctor = await Doctor.findOne({ userId: '68f7733f9a474b5afab3d185' });
     const patient = await Patient.findOne({ userId: '68f7733f9a474b5afab3d1c5' });
     
     if (!doctor) {
-      console.log('Doctor not found, creating...');
       const doctorUser = await User.findById('68f7733f9a474b5afab3d185');
       if (doctorUser) {
         const newDoctor = new Doctor({
@@ -59,19 +57,16 @@ async function createAppointment() {
           isAvailable: true
         });
         await newDoctor.save();
-        console.log('Doctor created:', newDoctor._id);
       }
     }
     
     if (!patient) {
-      console.log('Patient not found, creating...');
       const patientUser = await User.findById('68f7733f9a474b5afab3d1c5');
       if (patientUser) {
         const newPatient = new Patient({
           userId: patientUser._id
         });
         await newPatient.save();
-        console.log('Patient created:', newPatient._id);
       }
     }
     
@@ -80,12 +75,9 @@ async function createAppointment() {
     const patientRecord = await Patient.findOne({ userId: '68f7733f9a474b5afab3d1c5' });
     
     if (!doctorRecord || !patientRecord) {
-      console.log('Could not find or create doctor/patient records');
       return;
     }
     
-    console.log('Doctor ID:', doctorRecord._id);
-    console.log('Patient ID:', patientRecord._id);
     
     // Create an appointment
     const appointment = new Appointment({
@@ -100,12 +92,9 @@ async function createAppointment() {
     });
     
     await appointment.save();
-    console.log('✅ Appointment created successfully:', appointment._id);
-    console.log('Now Ahmed Hassan and Dr. Sarah Ahmed can chat!');
     
     await mongoose.disconnect();
   } catch (error) {
-    console.error('❌ Error:', error);
     await mongoose.disconnect();
   }
 }

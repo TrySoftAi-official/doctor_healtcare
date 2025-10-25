@@ -56,7 +56,6 @@ const ReviewConfirm = () => {
       alert('Appointment booked successfully!');
       
     } catch (error: any) {
-      console.error('Error booking appointment:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to book appointment' });
     } finally {
       setIsSubmitting(false);

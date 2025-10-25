@@ -122,12 +122,6 @@ export class DashboardService {
       };
     });
 
-    // Debug logging for recent appointments
-    console.log('Recent appointments data:', JSON.stringify(transformedRecentAppointments, null, 2));
-    if (transformedRecentAppointments && transformedRecentAppointments.length > 0) {
-      console.log('First appointment patient data:', JSON.stringify(transformedRecentAppointments[0].patientId, null, 2));
-      console.log('First appointment patient userId:', JSON.stringify(transformedRecentAppointments[0].patientId?.userId, null, 2));
-    }
 
     return {
       metrics: {

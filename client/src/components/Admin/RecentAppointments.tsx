@@ -10,9 +10,6 @@ const RecentAppointments = () => {
     retry: 1,
   });
 
-  // Debug logging
-  console.log('Dashboard data in RecentAppointments:', dashboardData);
-  console.log('Recent appointments:', dashboardData?.recentAppointments);
 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {

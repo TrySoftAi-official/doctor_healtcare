@@ -9,12 +9,6 @@ export default function Appointments() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleMenuToggle = () => {
-    console.log('Menu toggle clicked:', { 
-      currentState: isSidebarOpen, 
-      newState: !isSidebarOpen, 
-      isMobile,
-      timestamp: new Date().toISOString()
-    });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

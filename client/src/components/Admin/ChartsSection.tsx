@@ -35,9 +35,6 @@ const ChartsSection = () => {
     );
   }
 
-  // Debug logging
-  console.log('Dashboard data in ChartsSection:', dashboardData);
-  console.log('Daily trends:', dashboardData?.dailyTrends);
 
   // Generate daily appointment data from real API data
   const getDailyAppointmentData = () => {
@@ -75,7 +72,6 @@ const ChartsSection = () => {
   };
 
   const appointmentData = getDailyAppointmentData();
-  console.log('Appointment data:', appointmentData);
 
   // Ensure we have valid data before calculating max/min
   const validData = appointmentData.filter((item: any) => item && typeof item.value === 'number');

@@ -12,7 +12,6 @@ export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleMenuToggle = () => {
-    console.log('Menu toggle clicked:', { currentState: isSidebarOpen, newState: !isSidebarOpen, isMobile });
     setIsSidebarOpen(!isSidebarOpen);
   };
 

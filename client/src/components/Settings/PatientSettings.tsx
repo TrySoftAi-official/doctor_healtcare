@@ -48,7 +48,6 @@ const PatientSettings = () => {
         }));
       }
     } catch (error) {
-      console.error("Error loading patient data:", error);
       toast.error("Failed to load patient settings");
     } finally {
       setLoading(false);
@@ -92,7 +91,6 @@ const PatientSettings = () => {
       await settingsService.updatePatientSettings(formData);
       toast.success("Patient settings updated successfully");
     } catch (error) {
-      console.error("Error updating patient settings:", error);
       toast.error("Failed to update patient settings");
     } finally {
       setSaving(false);

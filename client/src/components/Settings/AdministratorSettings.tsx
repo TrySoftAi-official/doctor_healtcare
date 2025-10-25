@@ -41,7 +41,6 @@ const AdministratorSettings = () => {
         ...response
       }));
     } catch (error) {
-      console.error("Error loading system data:", error);
       toast.error("Failed to load system settings");
     } finally {
       setLoading(false);
@@ -65,7 +64,6 @@ const AdministratorSettings = () => {
       await settingsService.updateSystemSettings(formData);
       toast.success("System settings updated successfully");
     } catch (error) {
-      console.error("Error updating system settings:", error);
       toast.error("Failed to update system settings");
     } finally {
       setSaving(false);

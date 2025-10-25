@@ -67,7 +67,6 @@ export default function Login() {
       message.success("Login successful!");
       
     } catch (error: any) {
-      console.error('Login error:', error);
       
       let errorMessage = "Login failed. Please check your credentials.";
       
