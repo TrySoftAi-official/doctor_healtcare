@@ -137,13 +137,13 @@ const ChartsSection = () => {
               {/* Line path - only render if we have valid data */}
               {validData.length > 0 && (
                 <path
-                  d={`M 0,${200 - ((appointmentData[0]?.value || 0 - minValue) / (maxValue - minValue)) * 200} 
-                      L 66.67,${200 - ((appointmentData[1]?.value || 0 - minValue) / (maxValue - minValue)) * 200}
-                      L 133.33,${200 - ((appointmentData[2]?.value || 0 - minValue) / (maxValue - minValue)) * 200}
-                      L 200,${200 - ((appointmentData[3]?.value || 0 - minValue) / (maxValue - minValue)) * 200}
-                      L 266.67,${200 - ((appointmentData[4]?.value || 0 - minValue) / (maxValue - minValue)) * 200}
-                      L 333.33,${200 - ((appointmentData[5]?.value || 0 - minValue) / (maxValue - minValue)) * 200}
-                      L 400,${200 - ((appointmentData[6]?.value || 0 - minValue) / (maxValue - minValue)) * 200}`}
+                  d={`M 0,${200 - (((appointmentData[0]?.value || 0) - minValue) / (maxValue - minValue)) * 200} 
+                      L 66.67,${200 - (((appointmentData[1]?.value || 0) - minValue) / (maxValue - minValue)) * 200}
+                      L 133.33,${200 - (((appointmentData[2]?.value || 0) - minValue) / (maxValue - minValue)) * 200}
+                      L 200,${200 - (((appointmentData[3]?.value || 0) - minValue) / (maxValue - minValue)) * 200}
+                      L 266.67,${200 - (((appointmentData[4]?.value || 0) - minValue) / (maxValue - minValue)) * 200}
+                      L 333.33,${200 - (((appointmentData[5]?.value || 0) - minValue) / (maxValue - minValue)) * 200}
+                      L 400,${200 - (((appointmentData[6]?.value || 0) - minValue) / (maxValue - minValue)) * 200}`}
                   fill="none"
                   stroke="#3b82f6"
                   strokeWidth="3"

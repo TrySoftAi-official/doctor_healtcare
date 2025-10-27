@@ -387,4 +387,306 @@ export class DashboardService {
       totalPrescriptions,
     };
   }
+
+  async getAppointmentAnalytics(startDate?: string, endDate?: string) {
+    const dateFilter: any = {};
+    if (startDate && endDate) {
+      dateFilter.appointmentDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const [
+      totalAppointments,
+      completedAppointments,
+      cancelledAppointments,
+      pendingAppointments,
+      appointmentTrends,
+      statusDistribution
+    ] = await Promise.all([
+      this.appointmentModel.countDocuments(dateFilter),
+      this.appointmentModel.countDocuments({ ...dateFilter, status: AppointmentStatus.COMPLETED }),
+      this.appointmentModel.countDocuments({ ...dateFilter, status: AppointmentStatus.CANCELLED }),
+      this.appointmentModel.countDocuments({ ...dateFilter, status: AppointmentStatus.PENDING }),
+      this.appointmentModel.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$appointmentDate' },
+              month: { $month: '$appointmentDate' },
+              day: { $dayOfMonth: '$appointmentDate' }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+      ]),
+      this.appointmentModel.aggregate([
+        { $match: dateFilter },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+
+    return {
+      totalAppointments,
+      completedAppointments,
+      cancelledAppointments,
+      pendingAppointments,
+      appointmentTrends,
+      statusDistribution
+    };
+  }
+
+  async getUserAnalytics(startDate?: string, endDate?: string) {
+    const dateFilter: any = {};
+    if (startDate && endDate) {
+      dateFilter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const [
+      totalUsers,
+      totalDoctors,
+      totalPatients,
+      newRegistrations,
+      userGrowth,
+      activeUsers
+    ] = await Promise.all([
+      this.userModel.countDocuments({ isActive: true }),
+      this.userModel.countDocuments({ role: UserRole.DOCTOR, isActive: true }),
+      this.userModel.countDocuments({ role: UserRole.PATIENT, isActive: true }),
+      this.userModel.countDocuments({ ...dateFilter, isActive: true }),
+      this.userModel.aggregate([
+        { $match: { isActive: true } },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$createdAt' },
+              month: { $month: '$createdAt' }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]),
+      this.userModel.countDocuments({ 
+        isActive: true,
+        lastLogin: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      })
+    ]);
+
+    return {
+      totalUsers,
+      totalDoctors,
+      totalPatients,
+      newRegistrations,
+      userGrowth,
+      activeUsers
+    };
+  }
+
+  async getRevenueAnalytics(startDate?: string, endDate?: string) {
+    const dateFilter: any = {};
+    if (startDate && endDate) {
+      dateFilter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    // Calculate revenue from appointments (assuming each appointment has a fee)
+    const revenueData = await this.appointmentModel.aggregate([
+      { $match: { ...dateFilter, status: AppointmentStatus.COMPLETED } },
+      {
+        $lookup: {
+          from: 'doctors',
+          localField: 'doctorId',
+          foreignField: '_id',
+          as: 'doctor'
+        }
+      },
+      {
+        $unwind: '$doctor'
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$doctor.consultationFee' },
+          monthlyRevenue: {
+            $sum: {
+              $cond: [
+                {
+                  $gte: ['$createdAt', new Date(new Date().getFullYear(), new Date().getMonth(), 1)]
+                },
+                '$doctor.consultationFee',
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const revenue = revenueData.length > 0 ? revenueData[0] : { totalRevenue: 0, monthlyRevenue: 0 };
+
+    return {
+      totalRevenue: revenue.totalRevenue || 0,
+      monthlyRevenue: revenue.monthlyRevenue || 0,
+      revenueTrends: await this.getRevenueTrends(dateFilter)
+    };
+  }
+
+  async getRevenueTrends(dateFilter: any) {
+    return this.appointmentModel.aggregate([
+      { $match: { ...dateFilter, status: AppointmentStatus.COMPLETED } },
+      {
+        $lookup: {
+          from: 'doctors',
+          localField: 'doctorId',
+          foreignField: '_id',
+          as: 'doctor'
+        }
+      },
+      {
+        $unwind: '$doctor'
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          revenue: { $sum: '$doctor.consultationFee' }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+  }
+
+  async getSystemAnalytics() {
+    const [
+      systemUptime,
+      averageResponseTime,
+      totalUsers,
+      activeUsers,
+      totalAppointments,
+      completedAppointments
+    ] = await Promise.all([
+      this.calculateSystemUptime(),
+      this.calculateAverageResponseTime(),
+      this.userModel.countDocuments({ isActive: true }),
+      this.userModel.countDocuments({ 
+        isActive: true,
+        lastLogin: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      }),
+      this.appointmentModel.countDocuments(),
+      this.appointmentModel.countDocuments({ status: AppointmentStatus.COMPLETED })
+    ]);
+
+    return {
+      systemUptime,
+      averageResponseTime,
+      totalUsers,
+      activeUsers,
+      totalAppointments,
+      completedAppointments,
+      patientSatisfaction: await this.calculatePatientSatisfaction(),
+      doctorRatings: await this.getDoctorRatings(),
+      topPerformingDoctors: await this.getTopPerformingDoctors(),
+      recentActivity: await this.getRecentActivity()
+    };
+  }
+
+  private async calculateSystemUptime(): Promise<number> {
+    // Mock calculation - in real app, this would come from monitoring system
+    return 99.9;
+  }
+
+  private async calculateAverageResponseTime(): Promise<number> {
+    // Mock calculation - in real app, this would come from monitoring system
+    return 150; // milliseconds
+  }
+
+  private async calculatePatientSatisfaction(): Promise<number> {
+    // Mock calculation - in real app, this would come from feedback system
+    return 4.8;
+  }
+
+  private async getDoctorRatings() {
+    return this.doctorModel.aggregate([
+      {
+        $project: {
+          doctorName: {
+            $concat: ['$userId.firstName', ' ', '$userId.lastName']
+          },
+          rating: 1,
+          totalReviews: 1
+        }
+      },
+      { $sort: { rating: -1 } },
+      { $limit: 10 }
+    ]);
+  }
+
+  private async getTopPerformingDoctors() {
+    return this.appointmentModel.aggregate([
+      {
+        $match: { status: AppointmentStatus.COMPLETED }
+      },
+      {
+        $lookup: {
+          from: 'doctors',
+          localField: 'doctorId',
+          foreignField: '_id',
+          as: 'doctor'
+        }
+      },
+      {
+        $unwind: '$doctor'
+      },
+      {
+        $group: {
+          _id: '$doctorId',
+          doctorName: { $first: { $concat: ['$doctor.userId.firstName', ' ', '$doctor.userId.lastName'] } },
+          appointments: { $sum: 1 },
+          revenue: { $sum: '$doctor.consultationFee' }
+        }
+      },
+      { $sort: { appointments: -1 } },
+      { $limit: 10 }
+    ]);
+  }
+
+  private async getRecentActivity() {
+    const recentAppointments = await this.appointmentModel
+      .find()
+      .populate({
+        path: 'patientId',
+        populate: { path: 'userId', select: 'firstName lastName' }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: { path: 'userId', select: 'firstName lastName' }
+      })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .exec();
+
+    return recentAppointments.map((appointment: any) => ({
+      id: appointment._id.toString(),
+      type: 'appointment',
+      description: `New appointment scheduled with ${appointment.doctorId?.userId?.firstName || 'Unknown'} ${appointment.doctorId?.userId?.lastName || 'Doctor'}`,
+      timestamp: appointment.createdAt?.toISOString() || new Date().toISOString(),
+      user: `${appointment.patientId?.userId?.firstName || 'Unknown'} ${appointment.patientId?.userId?.lastName || 'Patient'}`
+    }));
+  }
 }

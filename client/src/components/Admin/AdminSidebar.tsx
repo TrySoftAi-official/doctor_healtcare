@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { UserOutlined } from '@ant-design/icons';
 import { useAuth } from "@/providers/AuthProvider";
 import { useState, useEffect, useRef } from "react";
 
@@ -60,6 +61,7 @@ const AdminSidebar = ({ onToggle, isMobile = false, isOpen = false }: AdminSideb
     Administrator: [
       { name: "Dashboard", icon: <Home className="w-5 h-5" />, path: "/Administrator", description: "Overview & Analytics" },
       { name: "Patients", icon: <Users className="w-5 h-5" />, path: "/Administrator/patients", description: "Manage Patients" },
+      { name: "Doctors", icon: <UserOutlined className="w-5 h-5" />, path: "/Administrator/doctors", description: "Manage Doctors" },
       { name: "Appointments", icon: <Calendar className="w-5 h-5" />, path: "/Administrator/appointment", description: "Schedule & Manage" },
       { name: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/Administrator/reports", description: "Analytics & Insights" },
       { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Administrator/settings", description: "System Configuration" },

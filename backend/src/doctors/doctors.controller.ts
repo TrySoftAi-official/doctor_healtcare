@@ -93,4 +93,26 @@ export class DoctorsController {
     }
     return this.doctorsService.updateRating(id, body.rating);
   }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMINISTRATOR)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Create new doctor (Admin only)' })
+  create(@Body() createDoctorDto: any) {
+    return this.doctorsService.create(createDoctorDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMINISTRATOR)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Delete doctor (Admin only)' })
+  remove(@Param('id') id: string) {
+    // Validate that id is a valid MongoDB ObjectId format
+    if (!id || id === '[object Object]' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      throw new Error('Invalid doctor ID format');
+    }
+    return this.doctorsService.remove(id);
+  }
 }

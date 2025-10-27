@@ -146,4 +146,52 @@ export class DoctorsService {
     // For now, return all available doctors
     return this.findAll({ isAvailable: true });
   }
+
+  async create(createDoctorDto: any) {
+    // First, create or find the user
+    let user;
+    if (createDoctorDto.userId) {
+      user = await this.userModel.findById(createDoctorDto.userId).exec();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+    } else {
+      // Create a new user if userId is not provided
+      const userData = {
+        firstName: createDoctorDto.firstName || 'Doctor',
+        lastName: createDoctorDto.lastName || 'User',
+        email: createDoctorDto.email || 'doctor@example.com',
+        phone: createDoctorDto.phone,
+        role: 'Doctor',
+        isActive: true,
+        isEmailVerified: false,
+      };
+      user = new this.userModel(userData);
+      await user.save();
+    }
+
+    // Create the doctor profile
+    const doctorData = {
+      ...createDoctorDto,
+      userId: user._id,
+    };
+    delete doctorData.firstName;
+    delete doctorData.lastName;
+    delete doctorData.email;
+    delete doctorData.phone;
+
+    const doctor = new this.doctorModel(doctorData);
+    await doctor.save();
+
+    // Return the doctor with populated user data
+    return this.findOne(doctor._id.toString());
+  }
+
+  async remove(id: string) {
+    const doctor = await this.doctorModel.findByIdAndDelete(id).exec();
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+    return { message: 'Doctor deleted successfully' };
+  }
 }

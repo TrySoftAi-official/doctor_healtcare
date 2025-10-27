@@ -108,4 +108,14 @@ export const doctorService = {
     const response = await api.patch(`/doctors/${doctorId}/rating`, { rating });
     return response.data;
   },
+
+  async createDoctor(data: any) {
+    const response = await api.post('/doctors', data);
+    return response.data;
+  },
+
+  async deleteDoctor(id: string) {
+    const response = await api.delete(`/doctors/${id}`);
+    return response.data;
+  },
 };
