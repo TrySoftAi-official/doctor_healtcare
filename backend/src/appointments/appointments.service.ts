@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Appointment, AppointmentDocument } from './schemas/appointment.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { Doctor, DoctorDocument } from '../doctors/schemas/doctor.schema';
@@ -9,6 +9,7 @@ import { CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto } from
 import { AppointmentStatus } from '../common/enums/appointment-status.enum';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { UserRole } from '../common/enums/user-role.enum';
 
 @Injectable()
 export class AppointmentsService {
@@ -58,9 +59,12 @@ export class AppointmentsService {
       await patient.save();
     }
 
-    // Check for time conflicts
+    // Ensure doctorId is converted to ObjectId for proper storage and querying
+    const doctorIdObjectId = new Types.ObjectId(createAppointmentDto.doctorId);
+    
+    // Check for time conflicts using ObjectId
     const existingAppointment = await this.appointmentModel.findOne({
-      doctorId: createAppointmentDto.doctorId,
+      doctorId: doctorIdObjectId,
       appointmentDate: new Date(createAppointmentDto.appointmentDate),
       startTime: createAppointmentDto.startTime,
       status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
@@ -80,6 +84,7 @@ export class AppointmentsService {
 
     const appointment = new this.appointmentModel({
       ...createAppointmentDto,
+      doctorId: doctorIdObjectId, // Use the ObjectId we created above
       patientId: patient._id, // Use the patient profile ID, not the user ID
       appointmentDate: new Date(createAppointmentDto.appointmentDate),
       endTime: endTime,
@@ -110,11 +115,50 @@ export class AppointmentsService {
     return savedAppointment;
   }
 
-  async findAll(filters: any = {}) {
+  async findAll(filters: any = {}, userId?: string, userRole?: string) {
     const query: any = {};
     
-    if (filters.doctorId) query.doctorId = filters.doctorId;
-    if (filters.patientId) query.patientId = filters.patientId;
+    // Apply role-based filtering for security
+    // Administrators can see all appointments
+    // Doctors can only see their own appointments
+    // Patients can only see their own appointments
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR && userRole !== 'Administrator') {
+      // Handle both enum and string role values for flexibility
+      if (userRole === UserRole.DOCTOR || userRole === 'Doctor') {
+        // Find doctor profile for this user
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (doctor) {
+          // Use the doctor's _id directly - MongoDB will match it correctly
+          // doctor._id is already an ObjectId, so we can use it as-is
+          query.doctorId = doctor._id;
+        } else {
+          // Doctor profile not found, return empty results
+          return [];
+        }
+      } else if (userRole === UserRole.PATIENT || userRole === 'Patient') {
+        // Find patient profile for this user
+        const patient = await this.patientModel.findOne({ userId }).exec();
+        if (patient) {
+          // Use the patient's _id directly - MongoDB will match it correctly
+          query.patientId = patient._id;
+        } else {
+          // Patient profile not found, return empty results
+          return [];
+        }
+      }
+    }
+    
+    // Apply additional filters (only if user has permission)
+    // Note: doctorId and patientId filters are only allowed for Administrators
+    // or if they match the user's own profile
+    if (userRole === UserRole.ADMINISTRATOR) {
+      if (filters.doctorId) query.doctorId = filters.doctorId;
+      if (filters.patientId) query.patientId = filters.patientId;
+    } else {
+      // For non-admins, ignore doctorId/patientId filters to prevent unauthorized access
+      // The role-based filtering above already ensures they only see their own data
+    }
+    
     if (filters.status) query.status = filters.status;
     if (filters.type) query.type = filters.type;
     if (filters.dateFrom) query.appointmentDate = { $gte: new Date(filters.dateFrom) };
@@ -181,7 +225,7 @@ export class AppointmentsService {
     }
   }
 
-  async findOne(id: string): Promise<any> {
+  async findOne(id: string, userId?: string, userRole?: string): Promise<any> {
     const appointment = await this.appointmentModel
       .findById(id)
       .populate({
@@ -204,6 +248,29 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
+    // Check authorization - ensure user has access to this appointment
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR) {
+      let hasAccess = false;
+      
+      if (userRole === UserRole.DOCTOR) {
+        // Doctor can only access appointments where they are the doctor
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (doctor && appointment.doctorId && appointment.doctorId.toString() === doctor._id.toString()) {
+          hasAccess = true;
+        }
+      } else if (userRole === UserRole.PATIENT) {
+        // Patient can only access their own appointments
+        const patient = await this.patientModel.findOne({ userId }).exec();
+        if (patient && appointment.patientId && appointment.patientId.toString() === patient._id.toString()) {
+          hasAccess = true;
+        }
+      }
+      
+      if (!hasAccess) {
+        throw new ForbiddenException('You do not have access to this appointment');
+      }
+    }
+
     // Ensure user data is properly attached
     if (appointment.patientId && (appointment.patientId as any).userId) {
       (appointment as any).patientUser = (appointment.patientId as any).userId;
@@ -222,10 +289,38 @@ export class AppointmentsService {
     return transformedAppointment as any;
   }
 
-  async update(id: string, updateAppointmentDto: UpdateAppointmentDto): Promise<any> {
+  async update(id: string, updateAppointmentDto: UpdateAppointmentDto, userId?: string, userRole?: string): Promise<any> {
     const appointment = await this.appointmentModel.findById(id).exec();
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
+    }
+
+    // Check authorization - ensure user has permission to update this appointment
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR) {
+      let hasPermission = false;
+      
+      if (userRole === UserRole.DOCTOR) {
+        // Doctor can update appointments where they are the doctor
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (doctor && appointment.doctorId && appointment.doctorId.toString() === doctor._id.toString()) {
+          hasPermission = true;
+        }
+      } else if (userRole === UserRole.PATIENT) {
+        // Patient can update their own appointments (e.g., change problem description)
+        const patient = await this.patientModel.findOne({ userId }).exec();
+        if (patient && appointment.patientId && appointment.patientId.toString() === patient._id.toString()) {
+          // Patients can only update certain fields (not status)
+          // Restrict status updates to doctors/admins
+          if (updateAppointmentDto.status && updateAppointmentDto.status !== appointment.status) {
+            throw new ForbiddenException('Patients cannot change appointment status');
+          }
+          hasPermission = true;
+        }
+      }
+      
+      if (!hasPermission) {
+        throw new ForbiddenException('You do not have permission to update this appointment');
+      }
     }
 
     const updatedAppointment = await this.appointmentModel
@@ -349,14 +444,56 @@ export class AppointmentsService {
     return { message: 'Appointment deleted successfully' };
   }
 
-  async getDoctorAppointments(doctorId: string, filters: any = {}) {
+  async getDoctorAppointments(doctorId: string, filters: any = {}, userId?: string, userRole?: string) {
+    // Check authorization - only allow if user is an admin, or the doctor themselves
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR) {
+      if (userRole === UserRole.DOCTOR) {
+        // Doctor can only access their own appointments
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (!doctor || doctor._id.toString() !== doctorId) {
+          throw new ForbiddenException('You do not have access to this doctor\'s appointments');
+        }
+      } else {
+        // Patients and other roles cannot access doctor appointments via this endpoint
+        throw new ForbiddenException('You do not have access to this doctor\'s appointments');
+      }
+    }
+    
     const query = { doctorId, ...filters };
-    return this.findAll(query);
+    return this.findAll(query, userId, userRole);
   }
 
-  async getPatientAppointments(patientId: string, filters: any = {}) {
+  async getPatientAppointments(patientId: string, filters: any = {}, userId?: string, userRole?: string) {
+    // Check authorization - only allow if user is an admin, or the patient themselves
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR) {
+      if (userRole === UserRole.PATIENT) {
+        // Patient can only access their own appointments
+        const patient = await this.patientModel.findOne({ userId }).exec();
+        if (!patient || patient._id.toString() !== patientId) {
+          throw new ForbiddenException('You do not have access to this patient\'s appointments');
+        }
+      } else if (userRole === UserRole.DOCTOR) {
+        // Doctors can access patient appointments if they have appointments with that patient
+        // This is handled by checking if there are any appointments between this doctor and patient
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (doctor) {
+          const hasAppointment = await this.appointmentModel.findOne({
+            doctorId: doctor._id,
+            patientId: patientId
+          }).exec();
+          if (!hasAppointment) {
+            throw new ForbiddenException('You do not have access to this patient\'s appointments');
+          }
+        } else {
+          throw new ForbiddenException('You do not have access to this patient\'s appointments');
+        }
+      } else {
+        throw new ForbiddenException('You do not have access to this patient\'s appointments');
+      }
+    }
+    
     const query = { patientId, ...filters };
-    return this.findAll(query);
+    return this.findAll(query, userId, userRole);
   }
 
   async getUpcomingAppointments(userId: string, role: string) {
@@ -368,18 +505,15 @@ export class AppointmentsService {
       status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
     };
 
-    if (role === 'Doctor') {
-      const doctor = await this.doctorModel.findOne({ userId }).exec();
-      if (doctor) query.doctorId = doctor._id;
-    } else if (role === 'Patient') {
-      const patient = await this.patientModel.findOne({ userId }).exec();
-      if (patient) query.patientId = patient._id;
-    }
+    // Note: We don't set doctorId/patientId here because findAll() will handle it
+    // based on userId and userRole. This ensures consistent filtering and authorization.
+    // We just add the date and status filters, and let findAll() apply role-based filtering.
+    // Pass the role directly - findAll will handle the enum comparison internally
 
-    return this.findAll(query);
+    return this.findAll(query, userId, role);
   }
 
-  async updateStatus(id: string, status: string): Promise<any> {
+  async updateStatus(id: string, status: string, userId?: string, userRole?: string): Promise<any> {
     // Validate status
     const validStatuses = ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'No Show'];
     if (!validStatuses.includes(status)) {
@@ -389,6 +523,20 @@ export class AppointmentsService {
     const appointment = await this.appointmentModel.findById(id).exec();
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
+    }
+
+    // Check authorization - only doctors and administrators can update appointment status
+    if (userRole && userId && userRole !== UserRole.ADMINISTRATOR) {
+      if (userRole === UserRole.DOCTOR) {
+        // Doctor can update status of their own appointments
+        const doctor = await this.doctorModel.findOne({ userId }).exec();
+        if (!doctor || !appointment.doctorId || appointment.doctorId.toString() !== doctor._id.toString()) {
+          throw new ForbiddenException('You do not have permission to update this appointment status');
+        }
+      } else if (userRole === UserRole.PATIENT) {
+        // Patients cannot update appointment status (they can only cancel)
+        throw new ForbiddenException('Patients cannot update appointment status. Use the cancel endpoint instead.');
+      }
     }
 
     // Update the status

@@ -82,35 +82,23 @@ export default function UpcomingAppointmentsTable() {
     // The query will automatically refetch due to the refetchInterval
   };
   
-  // Fetch appointments for the doctor
+  // Fetch upcoming appointments for the doctor from backend
   const { data: appointmentsData, isLoading, error } = useQuery({
     queryKey: ['doctor-upcoming-appointments', user?.id],
     queryFn: async () => {
-      // Use getAppointments() and filter on frontend since backend filtering has issues
-      return await appointmentService.getAppointments();
+      // Backend now properly filters appointments by doctor role
+      return await appointmentService.getUpcomingAppointments();
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && user?.role === 'Doctor',
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Filter and transform appointments for this doctor
+  // Transform appointments for display
   const getUpcomingAppointments = () => {
     if (!appointmentsData) return [];
     
-    
-    // Filter appointments for this doctor and get upcoming ones
-    const doctorAppointments = appointmentsData.filter((apt: any) => {
-      
-      // Check if this appointment belongs to the current doctor
-      const isDoctorAppointment = apt.doctorId?._id === user?.id || 
-                                  apt.doctorId === user?.id ||
-                                  (typeof apt.doctorId === 'object' && apt.doctorId?.userId?._id === user?.id);
-      
-      const isUpcoming = new Date(apt.appointmentDate) >= new Date();
-      
-      
-      return isDoctorAppointment && isUpcoming;
-    });
+    // Backend already filters by doctor and upcoming status, so just transform the data
+    const doctorAppointments = appointmentsData || [];
 
 
     // Sort by appointment date

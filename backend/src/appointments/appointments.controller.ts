@@ -49,7 +49,7 @@ export class AppointmentsController {
   @Get()
   @ApiOperation({ 
     summary: 'Get all appointments',
-    description: 'Retrieve appointments with optional filtering. Supports filtering by doctor, patient, status, type, and date range.'
+    description: 'Retrieve appointments with optional filtering. Supports filtering by doctor, patient, status, type, and date range. Returns only appointments accessible to the current user based on their role.'
   })
   @ApiQuery({ name: 'doctorId', required: false, description: 'Filter by doctor ID', example: '507f1f77bcf86cd799439012' })
   @ApiQuery({ name: 'patientId', required: false, description: 'Filter by patient ID', example: '507f1f77bcf86cd799439013' })
@@ -79,8 +79,8 @@ export class AppointmentsController {
     }
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - invalid or missing token' })
-  findAll(@Query() filters: any) {
-    return this.appointmentsService.findAll(filters);
+  findAll(@Query() filters: any, @Request() req) {
+    return this.appointmentsService.findAll(filters, req.user.userId, req.user.role);
   }
 
   @Get('upcoming')
@@ -116,26 +116,32 @@ export class AppointmentsController {
 
   @Get('doctor/:doctorId')
   @ApiOperation({ summary: 'Get appointments for a specific doctor' })
-  getDoctorAppointments(@Param('doctorId') doctorId: string, @Query() filters: any) {
-    return this.appointmentsService.getDoctorAppointments(doctorId, filters);
+  @ApiResponse({ status: 403, description: 'Forbidden - You do not have access to this doctor\'s appointments' })
+  getDoctorAppointments(@Param('doctorId') doctorId: string, @Query() filters: any, @Request() req) {
+    return this.appointmentsService.getDoctorAppointments(doctorId, filters, req.user.userId, req.user.role);
   }
 
   @Get('patient/:patientId')
   @ApiOperation({ summary: 'Get appointments for a specific patient' })
-  getPatientAppointments(@Param('patientId') patientId: string, @Query() filters: any) {
-    return this.appointmentsService.getPatientAppointments(patientId, filters);
+  @ApiResponse({ status: 403, description: 'Forbidden - You do not have access to this patient\'s appointments' })
+  getPatientAppointments(@Param('patientId') patientId: string, @Query() filters: any, @Request() req) {
+    return this.appointmentsService.getPatientAppointments(patientId, filters, req.user.userId, req.user.role);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get appointment by ID' })
-  findOne(@Param('id') id: string): Promise<any> {
-    return this.appointmentsService.findOne(id);
+  @ApiResponse({ status: 403, description: 'Forbidden - You do not have access to this appointment' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  findOne(@Param('id') id: string, @Request() req): Promise<any> {
+    return this.appointmentsService.findOne(id, req.user.userId, req.user.role);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update appointment' })
-  update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto): Promise<any> {
-    return this.appointmentsService.update(id, updateAppointmentDto);
+  @ApiResponse({ status: 403, description: 'Forbidden - You do not have permission to update this appointment' })
+  @ApiResponse({ status: 404, description: 'Appointment not found' })
+  update(@Param('id') id: string, @Body() updateAppointmentDto: UpdateAppointmentDto, @Request() req): Promise<any> {
+    return this.appointmentsService.update(id, updateAppointmentDto, req.user.userId, req.user.role);
   }
 
   @Put(':id/status')
@@ -171,9 +177,10 @@ export class AppointmentsController {
     }
   })
   @ApiResponse({ status: 400, description: 'Invalid status value' })
+  @ApiResponse({ status: 403, description: 'Forbidden - You do not have permission to update this appointment' })
   @ApiResponse({ status: 404, description: 'Appointment not found' })
-  updateStatus(@Param('id') id: string, @Body() body: { status: string }): Promise<any> {
-    return this.appointmentsService.updateStatus(id, body.status);
+  updateStatus(@Param('id') id: string, @Body() body: { status: string }, @Request() req): Promise<any> {
+    return this.appointmentsService.updateStatus(id, body.status, req.user.userId, req.user.role);
   }
 
   @Patch(':id/cancel')
