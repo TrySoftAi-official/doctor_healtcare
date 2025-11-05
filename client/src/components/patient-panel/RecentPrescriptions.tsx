@@ -135,9 +135,12 @@ export default function RecentPrescriptions() {
     const fetchRecentPrescriptions = async () => {
       try {
         setLoading(true);
+        console.log('Fetching recent prescriptions...');
         const data = await prescriptionService.getRecentPrescriptions(5);
+        console.log('Received prescriptions data:', data);
         setPrescriptions(data);
       } catch (error) {
+        console.error('Error fetching prescriptions:', error);
       } finally {
         setLoading(false);
       }

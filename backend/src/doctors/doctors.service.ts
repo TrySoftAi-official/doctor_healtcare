@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Doctor, DoctorDocument } from './schemas/doctor.schema';
@@ -157,10 +157,13 @@ export class DoctorsService {
       }
     } else {
       // Create a new user if userId is not provided
+      if (!createDoctorDto.email) {
+        throw new BadRequestException('Email is required to create a doctor user');
+      }
       const userData = {
         firstName: createDoctorDto.firstName || 'Doctor',
         lastName: createDoctorDto.lastName || 'User',
-        email: createDoctorDto.email || 'doctor@example.com',
+        email: createDoctorDto.email,
         phone: createDoctorDto.phone,
         role: 'Doctor',
         isActive: true,

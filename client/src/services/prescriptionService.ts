@@ -2,6 +2,7 @@ import api from '@/lib/api';
 
 export interface CreatePrescriptionRequest {
   patientId: string;
+  appointmentId?: string;
   medications: Array<{
     name: string;
     dosage: string;
@@ -11,6 +12,7 @@ export interface CreatePrescriptionRequest {
   }>;
   notes?: string;
   validUntil: string;
+  isRefillable?: boolean;
 }
 
 export interface UpdatePrescriptionRequest {

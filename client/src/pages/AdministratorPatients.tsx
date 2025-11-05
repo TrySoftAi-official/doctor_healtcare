@@ -18,7 +18,6 @@ import {
 } from 'antd';
 import { 
   PlusOutlined, 
-  EditOutlined, 
   DeleteOutlined, 
   EyeOutlined,
   SearchOutlined,
@@ -114,19 +113,7 @@ const AdministratorPatients: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleEdit = (patient: Patient) => {
-    setEditingPatient(patient);
-    form.setFieldsValue({
-      ...patient,
-      emergencyContactName: patient.emergencyContact?.name,
-      emergencyContactRelationship: patient.emergencyContact?.relationship,
-      emergencyContactPhone: patient.emergencyContact?.phone,
-      insuranceProvider: patient.insuranceInfo?.provider,
-      insurancePolicyNumber: patient.insuranceInfo?.policyNumber,
-      insuranceGroupNumber: patient.insuranceInfo?.groupNumber,
-    });
-    setModalVisible(true);
-  };
+  // Removed handleEdit - admin can only view, not edit
 
   const handleView = (patient: Patient) => {
     setEditingPatient(patient);
@@ -281,12 +268,6 @@ const AdministratorPatients: React.FC = () => {
             onClick={() => handleView(record)}
             title="View Details"
           />
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            title="Edit Patient"
-          />
           <Popconfirm
             title="Are you sure you want to delete this patient?"
             onConfirm={() => handleDelete(record._id)}
@@ -377,7 +358,7 @@ const AdministratorPatients: React.FC = () => {
       </Card>
 
       <Modal
-        title={editingPatient ? 'View/Edit Patient' : 'Add New Patient'}
+        title={editingPatient ? 'View Patient Details' : 'Add New Patient'}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -390,6 +371,7 @@ const AdministratorPatients: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          disabled={!!editingPatient}
         >
           <Row gutter={16}>
             <Col span={12}>
@@ -515,13 +497,8 @@ const AdministratorPatients: React.FC = () => {
 
           <div className="flex justify-end gap-2">
             <Button onClick={() => setModalVisible(false)}>
-              Cancel
+              {editingPatient ? 'Close' : 'Cancel'}
             </Button>
-            {editingPatient && (
-              <Button type="primary" htmlType="submit">
-                Update Patient
-              </Button>
-            )}
             {!editingPatient && (
               <Button type="primary" htmlType="submit">
                 Create Patient

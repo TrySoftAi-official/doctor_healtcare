@@ -162,13 +162,51 @@ export class PrescriptionsService {
   }
 
   async getPatientPrescriptions(userId: string) {
+    console.log('Getting prescriptions for userId:', userId);
+    
     // First, find the patient record for this user
     const patient = await this.patientModel.findOne({ userId }).exec();
+    console.log('Found patient:', patient);
+    
     if (!patient) {
       throw new NotFoundException('Patient not found');
     }
 
-    return this.findAll({ patientId: patient._id });
+    // Get prescriptions for this patient - try both ObjectId and string matching
+    const prescriptions = await this.prescriptionModel
+      .find({ 
+        $or: [
+          { patientId: patient._id },
+          { patientId: patient._id.toString() }
+        ]
+      })
+      .populate({
+        path: 'patientId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        select: 'userId specialty',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    console.log('Found prescriptions:', prescriptions.length, 'for patient:', patient._id);
+
+    // Populate user details for each prescription
+    for (const prescription of prescriptions) {
+      await this.populatePrescription(prescription);
+    }
+
+    return prescriptions;
   }
 
   async getDoctorPrescriptions(doctorId: string) {

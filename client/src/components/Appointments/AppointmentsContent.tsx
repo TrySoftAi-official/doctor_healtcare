@@ -24,14 +24,18 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  FileText
+  FileText,
+  Pill,
+  Stethoscope
 } from "lucide-react";
+import CreatePrescriptionForm from "@/components/Prescription/CreatePrescriptionForm";
 
 interface Appointment {
   id: string;
   patient?: string;
   doctor?: string;
   patientPhone?: string;
+  patientId?: string; // Add patientId for prescription creation
   doctorSpecialty?: string;
   date: string;
   time: string;
@@ -50,6 +54,8 @@ const AppointmentsContent = () => {
   const [viewMode, setViewMode] = useState("list"); // list, calendar, grid
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
+  const [prescriptionAppointment, setPrescriptionAppointment] = useState<Appointment | null>(null);
 
   // Fetch appointments based on user role
   const { data: appointmentsData, isLoading, error } = useQuery({
@@ -72,6 +78,11 @@ const AppointmentsContent = () => {
   const getRoleSpecificData = () => {
     const appointments = appointmentsData || [];
     
+    // Debug logging
+    console.log('Raw appointments data:', appointments);
+    console.log('User role:', userRole);
+    console.log('User ID:', user?.id);
+    
     switch (userRole) {
       case "Administrator":
         return {
@@ -79,8 +90,12 @@ const AppointmentsContent = () => {
           description: "Manage all system appointments and scheduling",
           appointments: appointments.map((apt: any) => ({
             id: apt._id,
-            patient: formatPatientName(apt.patientId, apt.problemDescription),
-            doctor: formatDoctorName(apt.doctorId),
+            patient: apt.patientId?.userId ? 
+              `${apt.patientId.userId.firstName} ${apt.patientId.userId.lastName}` : 
+              "Unknown Patient",
+            doctor: apt.doctorId?.userId ? 
+              `Dr. ${apt.doctorId.userId.firstName} ${apt.doctorId.userId.lastName}` : 
+              "Unknown Doctor",
             date: formatAppointmentDate(apt.appointmentDate),
             time: formatAppointmentTime(apt.startTime),
             duration: apt.duration || calculateDuration(apt.startTime, apt.endTime),
@@ -94,11 +109,14 @@ const AppointmentsContent = () => {
           title: "My Appointments",
           description: "Manage your patient appointments and schedule",
           appointments: appointments
-            .filter((apt: any) => apt.doctorId?._id === user?.id)
+            .filter((apt: any) => apt.doctorId?._id === user?.id || apt.doctorId?.userId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              patient: formatPatientName(apt.patientId, apt.problemDescription),
+              patient: apt.patientId?.userId ? 
+                `${apt.patientId.userId.firstName} ${apt.patientId.userId.lastName}` : 
+                "Unknown Patient",
               patientPhone: apt.patientId?.userId?.phone || "No phone available",
+              patientId: apt.patientId?._id, // Store the actual patient ID for prescription creation
               date: formatAppointmentDate(apt.appointmentDate),
               time: formatAppointmentTime(apt.startTime),
               duration: apt.duration || calculateDuration(apt.startTime, apt.endTime),
@@ -113,10 +131,12 @@ const AppointmentsContent = () => {
           title: "My Appointments",
           description: "View and manage your healthcare appointments",
           appointments: appointments
-            .filter((apt: any) => apt.patientId?._id === user?.id)
+            .filter((apt: any) => apt.patientId?._id === user?.id || apt.patientId?.userId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              doctor: formatDoctorName(apt.doctorId),
+              doctor: apt.doctorId?.userId ? 
+                `Dr. ${apt.doctorId.userId.firstName} ${apt.doctorId.userId.lastName}` : 
+                "Unknown Doctor",
               doctorSpecialty: apt.doctorId?.specialty || "General Medicine",
               date: formatAppointmentDate(apt.appointmentDate),
               time: formatAppointmentTime(apt.startTime),
@@ -155,6 +175,26 @@ const AppointmentsContent = () => {
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
+
+  const handleCreatePrescription = (appointment: Appointment) => {
+    console.log('Creating prescription for appointment:', appointment);
+    console.log('Patient ID:', appointment.patientId);
+    console.log('Patient Name:', appointment.patient);
+    setPrescriptionAppointment(appointment);
+    setShowPrescriptionForm(true);
+  };
+
+  const handlePrescriptionSuccess = () => {
+    setShowPrescriptionForm(false);
+    setPrescriptionAppointment(null);
+    // Refetch appointments to show updated data
+    window.location.reload(); // Simple refresh for now
+  };
+
+  const handlePrescriptionCancel = () => {
+    setShowPrescriptionForm(false);
+    setPrescriptionAppointment(null);
+  };
 
   if (isLoading) {
     return (
@@ -394,6 +434,24 @@ const AppointmentsContent = () => {
                 <p className="text-gray-600 mb-4">{selectedAppointment.notes}</p>
                 
                 <div className="space-y-3">
+                  {userRole === "Doctor" && selectedAppointment.status === "completed" && (
+                    <button 
+                      onClick={() => handleCreatePrescription(selectedAppointment)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      <Pill className="w-4 h-4 mr-2" />
+                      Create Prescription
+                    </button>
+                  )}
+                  {userRole === "Doctor" && selectedAppointment.status !== "completed" && (
+                    <button 
+                      onClick={() => handleCreatePrescription(selectedAppointment)}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                    >
+                      <Stethoscope className="w-4 h-4 mr-2" />
+                      Create Prescription
+                    </button>
+                  )}
                   <button className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Send Message
@@ -426,6 +484,17 @@ const AppointmentsContent = () => {
           )}
         </div>
       </div>
+
+      {/* Prescription Creation Modal */}
+      {showPrescriptionForm && prescriptionAppointment && (
+        <CreatePrescriptionForm
+          appointmentId={prescriptionAppointment.id}
+          patientId={prescriptionAppointment.patientId || prescriptionAppointment.patient || ''}
+          patientName={prescriptionAppointment.patient || 'Patient'}
+          onSuccess={handlePrescriptionSuccess}
+          onCancel={handlePrescriptionCancel}
+        />
+      )}
     </div>
   );
 };

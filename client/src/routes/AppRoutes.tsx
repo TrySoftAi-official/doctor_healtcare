@@ -6,10 +6,13 @@ import Settings from '@/pages/Settings';
 import Reports from '@/pages/Reports';
 import Appointments from '@/pages/Appointments';
 import PatientPanel from '@/pages/PatientPanel';
+import PatientProfile from '@/pages/PatientProfile';
 import DoctorPlan from '@/pages/DoctorPlan';
+import DoctorProfile from '@/pages/DoctorProfile';
 import AdministratorPatients from '@/pages/AdministratorPatients';
 import AdministratorDoctors from '@/pages/AdministratorDoctors';
 import TestMobile from '@/pages/TestMobile';
+import PrescriptionTest from '@/pages/PrescriptionTest';
 import { DoctorChat } from '@/pages/DoctorChat';
 import { PatientChat } from '@/pages/PatientChat';
 import Login from '@/pages/auth/Login';
@@ -102,6 +105,14 @@ export default function AppRoutes() {
           } 
         />
         <Route 
+          path="/Doctor/profile" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <DoctorProfile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/Doctor/reports" 
           element={
             <ProtectedRoute allowedRoles={['Doctor']}>
@@ -146,6 +157,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
               <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient/profile" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <PatientProfile />
             </ProtectedRoute>
           } 
         />
@@ -222,8 +241,9 @@ export default function AppRoutes() {
           </>
         } />
         
-        {/* Test route */}
+        {/* Test routes */}
         <Route path="/test-mobile" element={<TestMobile />} />
+        <Route path="/prescription-test" element={<PrescriptionTest />} />
       </Routes>
     </>
   );
