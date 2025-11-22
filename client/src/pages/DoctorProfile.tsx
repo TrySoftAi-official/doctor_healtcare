@@ -11,13 +11,18 @@ import {
   Divider,
   message,
   Spin,
-  Switch
+  Switch,
+  Upload,
+  Avatar
 } from 'antd';
 import { 
   SaveOutlined,
-  UserOutlined
+  UserOutlined,
+  CameraOutlined
 } from '@ant-design/icons';
 import { doctorService } from '@/services/doctorService';
+import { uploadService } from '@/services/uploadService';
+import { userService } from '@/services/userService';
 import AdminSidebar from '@/components/Admin/AdminSidebar';
 import AdminHeader from '@/components/Admin/AdminHeader';
 import { useMobileDetection } from '@/hooks';
@@ -34,6 +39,8 @@ interface DoctorProfile {
     lastName: string;
     email: string;
     phone?: string;
+    profileImage?: string;
+    dateOfBirth?: string;
   };
   specialty: string;
   licenseNumber?: string;
@@ -52,6 +59,8 @@ const DoctorProfile: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [doctorData, setDoctorData] = useState<DoctorProfile | null>(null);
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -62,6 +71,22 @@ const DoctorProfile: React.FC = () => {
 
   const handleMenuToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleProfileImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const uploadResult = await uploadService.uploadProfileImage(file);
+      setProfileImage(uploadResult.url);
+      await userService.updateProfile({ profileImage: uploadResult.url });
+      message.success('Profile image updated successfully');
+      return false;
+    } catch (error) {
+      message.error('Failed to upload profile image: ' + ((error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error'));
+      return false;
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const fetchSpecialties = async () => {
@@ -78,7 +103,15 @@ const DoctorProfile: React.FC = () => {
     try {
       const data = await doctorService.getMyProfile();
       setDoctorData(data);
+      if (data.user?.profileImage) {
+        setProfileImage(data.user.profileImage);
+      }
       form.setFieldsValue({
+        firstName: data.user?.firstName || '',
+        lastName: data.user?.lastName || '',
+        email: data.user?.email || '',
+        phone: data.user?.phone || '',
+        dateOfBirth: data.user?.dateOfBirth || '',
         specialty: data.specialty || '',
         licenseNumber: data.licenseNumber || '',
         experience: data.experience || 0,
@@ -99,6 +132,15 @@ const DoctorProfile: React.FC = () => {
   const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
+      // Update user basic info
+      await userService.updateProfile({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phone: values.phone,
+        dateOfBirth: values.dateOfBirth || undefined,
+      });
+
+      // Update doctor profile
       const updateData = {
         specialty: values.specialty,
         licenseNumber: values.licenseNumber || '',
@@ -119,7 +161,7 @@ const DoctorProfile: React.FC = () => {
 
       await doctorService.updateMyProfile(updateData);
       message.success('Profile updated successfully');
-      fetchDoctorProfile(); // Refresh data
+      fetchDoctorProfile();
     } catch (error) {
       message.error('Failed to update profile: ' + ((error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error'));
     } finally {
@@ -192,6 +234,88 @@ const DoctorProfile: React.FC = () => {
                 layout="vertical"
                 onFinish={handleSubmit}
               >
+                <Divider>Profile Picture</Divider>
+
+                <Row gutter={16} className="mb-6">
+                  <Col span={24}>
+                    <div className="flex items-center gap-4">
+                      <Avatar
+                        size={120}
+                        icon={<UserOutlined />}
+                        src={profileImage}
+                        className="bg-blue-500"
+                      />
+                      <Upload
+                        maxCount={1}
+                        beforeUpload={handleProfileImageUpload}
+                        accept="image/*"
+                      >
+                        <Button 
+                          icon={<CameraOutlined />} 
+                          loading={uploadingImage}
+                          type="primary"
+                        >
+                          Upload Photo
+                        </Button>
+                      </Upload>
+                    </div>
+                  </Col>
+                </Row>
+
+                <Divider>Personal Information</Divider>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="firstName"
+                      label="First Name"
+                      rules={[{ required: true, message: 'Please enter first name' }]}
+                    >
+                      <Input placeholder="Enter first name" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="lastName"
+                      label="Last Name"
+                      rules={[{ required: true, message: 'Please enter last name' }]}
+                    >
+                      <Input placeholder="Enter last name" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="email"
+                      label="Email Address"
+                      rules={[{ required: true, type: 'email', message: 'Please enter valid email' }]}
+                    >
+                      <Input placeholder="Enter email" disabled />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="phone"
+                      label="Phone Number"
+                    >
+                      <Input placeholder="Enter phone number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="dateOfBirth"
+                      label="Date of Birth"
+                    >
+                      <Input type="date" placeholder="Select date of birth" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
                 <Divider>Professional Information</Divider>
 
                 <Row gutter={16}>

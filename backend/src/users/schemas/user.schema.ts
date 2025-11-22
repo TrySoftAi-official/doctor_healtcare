@@ -28,6 +28,9 @@ export class User {
   gender?: string;
 
   @Prop()
+  bio?: string;
+
+  @Prop()
   profileImage?: string;
 
   @Prop({ type: String, enum: UserRole, required: true })

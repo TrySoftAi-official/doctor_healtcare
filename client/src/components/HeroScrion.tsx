@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import heroImage from "../assest/hero_imgs.png";
 
 
 export default function HeroScrion() {
@@ -10,12 +11,12 @@ export default function HeroScrion() {
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&h=800&fit=crop')",
+            backgroundImage: `url('${heroImage}')`,
           }}
         ></div>
         
         {/* Light Blue Overlay */}
-        <div className="absolute inset-0 bg-blue-100/60"></div>
+        <div className="absolute inset-0 bg-blue-100/10"></div>
         
         {/* Corner Icons */}
         <div className="absolute top-8 left-8 w-12 h-12 bg-blue-200/50 rounded-full flex items-center justify-center">
@@ -41,7 +42,8 @@ export default function HeroScrion() {
           <Button
             asChild
             size="lg"
-            className="bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50 font-semibold px-8 py-3 text-lg"
+            className=" rounded-full
+            bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50 font-semibold px-8 py-3 text-lg"
           >
             <Link to="/appointment" className="flex items-center">
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">

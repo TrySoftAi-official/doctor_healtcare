@@ -50,6 +50,9 @@ export class Patient {
   @Prop()
   notes: string;
 
+  @Prop()
+  bio: string;
+
   // Virtual property for populated user data (not stored in DB)
   user?: User;
 }

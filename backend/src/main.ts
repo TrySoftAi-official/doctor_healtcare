@@ -24,15 +24,12 @@ async function bootstrap() {
   app.use(compression());
   
   // Serve static files from uploads directory
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  const uploadsPath = join(process.cwd(), 'uploads');
+  app.useStaticAssets(uploadsPath, {
     prefix: '/uploads/',
   });
   
-  // Add a simple route to test static file serving
-  app.use('/uploads', (req, res, next) => {
-    console.log('Static file request:', req.url);
-    next();
-  });
+  console.log('📁 Serving static files from:', uploadsPath);
   app.use(cors({
     origin: [
       process.env.FRONTEND_URL || 'http://localhost:5173',

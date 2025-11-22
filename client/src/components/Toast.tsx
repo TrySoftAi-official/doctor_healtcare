@@ -32,8 +32,12 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
   const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = Math.random().toString(36).substring(2, 11);
     const newToast: Toast = {
       ...toast,
       id,
@@ -48,11 +52,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         removeToast(id);
       }, newToast.duration);
     }
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  }, []);
+  }, [removeToast]);
 
   const clearToasts = useCallback(() => {
     setToasts([]);
@@ -69,8 +69,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToast();
 
+  if (toasts.length === 0) return null;
+
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-[9999] space-y-2 pointer-events-none">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
@@ -84,6 +86,14 @@ interface ToastItemProps {
 }
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    // Trigger animation on mount
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
@@ -122,27 +132,41 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     }
   };
 
+  const handleRemove = () => {
+    setIsVisible(false);
+    setTimeout(() => onRemove(toast.id), 300); // Wait for animation
+  };
+
   return (
-    <div className={`max-w-sm w-full ${getBackgroundColor()} border rounded-lg shadow-lg overflow-hidden`}>
+    <div
+      className={`
+        max-w-sm w-full sm:max-w-sm ${getBackgroundColor()} 
+        border rounded-lg shadow-lg overflow-hidden pointer-events-auto
+        transform transition-all duration-300 ease-in-out
+        ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+      `}
+    >
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             {getIcon()}
           </div>
-          <div className="ml-3 w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900">
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 break-words">
               {toast.title}
             </p>
             {toast.message && (
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 break-words">
                 {toast.message}
               </p>
             )}
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
-              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              onClick={() => onRemove(toast.id)}
+              type="button"
+              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              onClick={handleRemove}
+              aria-label="Close notification"
             >
               <span className="sr-only">Close</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

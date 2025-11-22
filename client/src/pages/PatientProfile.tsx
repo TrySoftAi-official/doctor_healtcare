@@ -10,13 +10,18 @@ import {
   Typography,
   Divider,
   message,
-  Spin
+  Spin,
+  Upload,
+  Avatar
 } from 'antd';
 import { 
   SaveOutlined,
-  UserOutlined
+  UserOutlined,
+  CameraOutlined
 } from '@ant-design/icons';
 import { patientService } from '@/services/patientService';
+import { uploadService } from '@/services/uploadService';
+import { userService } from '@/services/userService';
 import AdminSidebar from '@/components/Admin/AdminSidebar';
 import AdminHeader from '@/components/Admin/AdminHeader';
 import { useMobileDetection } from '@/hooks';
@@ -33,6 +38,8 @@ interface PatientProfile {
     lastName: string;
     email: string;
     phone?: string;
+    profileImage?: string;
+    dateOfBirth?: string;
   };
   emergencyContact?: {
     name: string;
@@ -49,6 +56,7 @@ interface PatientProfile {
   };
   preferredLanguage?: string;
   notes?: string;
+  bio?: string;
 }
 
 const PatientProfile: React.FC = () => {
@@ -56,6 +64,8 @@ const PatientProfile: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [patientData, setPatientData] = useState<PatientProfile | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const { isMobile } = useMobileDetection();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -67,12 +77,37 @@ const PatientProfile: React.FC = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const handleProfileImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const uploadResult = await uploadService.uploadProfileImage(file);
+      setProfileImage(uploadResult.url);
+      await userService.updateProfile({ profileImage: uploadResult.url });
+      message.success('Profile image updated successfully');
+      return false;
+    } catch (error) {
+      message.error('Failed to upload profile image: ' + ((error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error'));
+      return false;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const fetchPatientProfile = async () => {
     setLoading(true);
     try {
       const data = await patientService.getMyProfile();
       setPatientData(data);
+      if (data.userId?.profileImage) {
+        setProfileImage(data.userId.profileImage);
+      }
       form.setFieldsValue({
+        firstName: data.userId?.firstName || '',
+        lastName: data.userId?.lastName || '',
+        email: data.userId?.email || '',
+        phone: data.userId?.phone || '',
+        dateOfBirth: data.userId?.dateOfBirth || '',
+        bio: data.bio || '',
         emergencyContactName: data.emergencyContact?.name || '',
         emergencyContactRelationship: data.emergencyContact?.relationship || '',
         emergencyContactPhone: data.emergencyContact?.phone || '',
@@ -95,8 +130,17 @@ const PatientProfile: React.FC = () => {
   const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
-      // Update emergency contact, preferred language, and notes in one call
+      // Update user basic info
+      await userService.updateProfile({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        phone: values.phone,
+        dateOfBirth: values.dateOfBirth || undefined,
+      });
+
+      // Update patient profile with bio and emergency contact
       await patientService.updateMyProfile({
+        bio: values.bio || '',
         emergencyContact: {
           name: values.emergencyContactName,
           relationship: values.emergencyContactRelationship,
@@ -137,7 +181,7 @@ const PatientProfile: React.FC = () => {
       await patientService.updateCurrentMedications({ currentMedications });
 
       message.success('Profile updated successfully');
-      fetchPatientProfile(); // Refresh data
+      fetchPatientProfile();
     } catch (error) {
       message.error('Failed to update profile: ' + ((error as any)?.response?.data?.message || (error as any)?.message || 'Unknown error'));
     } finally {
@@ -210,6 +254,100 @@ const PatientProfile: React.FC = () => {
                 layout="vertical"
                 onFinish={handleSubmit}
               >
+                <Divider>Profile Picture</Divider>
+
+                <Row gutter={16} className="mb-6">
+                  <Col span={24}>
+                    <div className="flex items-center gap-4">
+                      <Avatar
+                        size={120}
+                        icon={<UserOutlined />}
+                        src={profileImage}
+                        className="bg-blue-500"
+                      />
+                      <Upload
+                        maxCount={1}
+                        beforeUpload={handleProfileImageUpload}
+                        accept="image/*"
+                      >
+                        <Button 
+                          icon={<CameraOutlined />} 
+                          loading={uploadingImage}
+                          type="primary"
+                        >
+                          Upload Photo
+                        </Button>
+                      </Upload>
+                    </div>
+                  </Col>
+                </Row>
+
+                <Divider>Personal Information</Divider>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="firstName"
+                      label="First Name"
+                      rules={[{ required: true, message: 'Please enter first name' }]}
+                    >
+                      <Input placeholder="Enter first name" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="lastName"
+                      label="Last Name"
+                      rules={[{ required: true, message: 'Please enter last name' }]}
+                    >
+                      <Input placeholder="Enter last name" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="email"
+                      label="Email Address"
+                      rules={[{ required: true, type: 'email', message: 'Please enter valid email' }]}
+                    >
+                      <Input placeholder="Enter email" disabled />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="phone"
+                      label="Phone Number"
+                    >
+                      <Input placeholder="Enter phone number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="dateOfBirth"
+                      label="Date of Birth"
+                    >
+                      <Input type="date" placeholder="Select date of birth" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Divider>Bio</Divider>
+
+                <Form.Item
+                  name="bio"
+                  label="Bio"
+                >
+                  <TextArea
+                    rows={3}
+                    placeholder="Enter your bio"
+                  />
+                </Form.Item>
+
                 <Divider>Emergency Contact Information</Divider>
 
                 <Row gutter={16}>

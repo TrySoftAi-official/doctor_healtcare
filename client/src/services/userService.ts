@@ -58,5 +58,26 @@ export const userService = {
   async getUserById(id: string) {
     const response = await api.get(`/users/${id}`);
     return response.data;
-  }
+  },
+
+  async getProfile() {
+    const response = await api.get('/users/profile');
+    return response.data;
+  },
+
+  async updateProfile(profileData: any) {
+    const response = await api.patch('/users/profile', profileData);
+    return response.data;
+  },
+
+  async uploadProfileImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await api.post('/upload/profile-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 };

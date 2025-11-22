@@ -1,3 +1,5 @@
+import whyFamilyImage from "../assest/whyfamialy.png";
+
 const WhyTrustUs = () => {
     return (
       <div className="bg-blue-50">
@@ -69,7 +71,7 @@ const WhyTrustUs = () => {
             <div className="relative">
               <div className="relative rounded-lg shadow-lg overflow-hidden">
                 <img 
-                  src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop" 
+                  src={whyFamilyImage} 
                   alt="Nurse caring for elderly patient"
                   className="w-full h-auto"
                 />
